@@ -1,15 +1,20 @@
 # -*- coding: utf-8 -*-
-from telegram.ext import Updater
-from telegram.ext import CommandHandler
 import logging
+from threading import Lock
 
+from telegram.ext import CommandHandler
+from telegram.ext import Updater
+
+logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                    level=logging.INFO)
 # TODO /stop command
 # TODO authorization
 
 allowed_users = ('daniilbubnov', 'julia_vikulina')
 
-logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                    level=logging.INFO)
+todo_list = []
+
+lock = Lock()
 
 
 def stop(bot, update):
@@ -17,20 +22,45 @@ def stop(bot, update):
     pass
 
 
+def add(bot, update):
+    logging.log(level=logging.INFO, msg="Adding a task " + str(update.message))
+    if not allowed_user(bot, update):
+        return
+    if update.message.text is None:
+        return
+    with lock:
+        todo_list.append(update.message.text)
+    pass
+
+
+def listall(bot, update):
+    logging.log(level=logging.INFO, msg="Listing tasks ")
+    if not allowed_user(bot, update):
+        return
+    bot.sendMessage(chat_id=update.message.chat_id, text=todo_list)
+    pass
+
+
+def allowed_user(bot, update) -> bool:
+    if update.message.from_user.username not in allowed_users:
+        bot.sendMessage(chat_id=update.message.chat_id, text="None of your business!")
+        return False
+    return True
+
+
 def start(bot, update):
     logging.log(level=logging.INFO, msg="received message" + str(update))
 
-    if update.message.from_user.username not in allowed_users:
-        bot.sendMessage(chat_id=update.message.chat_id, text="None of your business!")
+    if not allowed_user(bot, update):
         return
     bot.sendMessage(chat_id=update.message.chat_id, text="Hola!")
 
 
 updater = Updater(token='TOKEN')
-start_handler = CommandHandler('start', start)
-stop_handler = CommandHandler('stop', stop)
+add_handler = CommandHandler('add', add)
+listall_handler = CommandHandler('listall', listall)
 
-updater.dispatcher.add_handler(start_handler)
-updater.dispatcher.add_handler(stop_handler)
+updater.dispatcher.add_handler(add_handler)
+updater.dispatcher.add_handler(listall_handler)
 
 updater.start_polling()  # поехали!
