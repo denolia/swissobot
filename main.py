@@ -5,8 +5,10 @@ from threading import Lock
 from telegram.ext import CommandHandler
 from telegram.ext import Updater
 
+from task import Task
+
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                    level=logging.INFO)
+                    level=logging.DEBUG)
 # TODO /stop command
 # TODO authorization
 
@@ -17,27 +19,29 @@ todo_list = []
 lock = Lock()
 
 
-def stop(bot, update):
-    # TODO implement stop
+def add_category(bot, update):
+    # TODO implement
     pass
 
 
 def add(bot, update):
-    logging.log(level=logging.INFO, msg="Adding a task " + str(update.message))
+    logging.debug(msg="Adding a task " + str(update.message))
     if not allowed_user(bot, update):
         return
     if update.message.text is None:
         return
     with lock:
-        todo_list.append(update.message.text)
+        added_task = Task(update.message.text.replace('/add ', ''))
+        todo_list.append(added_task)
+        logging.debug("Task is successfully added: " + str(added_task))
     pass
 
 
 def listall(bot, update):
-    logging.log(level=logging.INFO, msg="Listing tasks ")
+    logging.debug(msg="Listing tasks ")
     if not allowed_user(bot, update):
         return
-    bot.sendMessage(chat_id=update.message.chat_id, text=todo_list)
+    bot.sendMessage(chat_id=update.message.chat_id, text=str(todo_list))
     pass
 
 
@@ -46,14 +50,6 @@ def allowed_user(bot, update) -> bool:
         bot.sendMessage(chat_id=update.message.chat_id, text="None of your business!")
         return False
     return True
-
-
-def start(bot, update):
-    logging.log(level=logging.INFO, msg="received message" + str(update))
-
-    if not allowed_user(bot, update):
-        return
-    bot.sendMessage(chat_id=update.message.chat_id, text="Hola!")
 
 
 updater = Updater(token='TOKEN')
