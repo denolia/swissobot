@@ -3,6 +3,8 @@ class Task:
     due_date = None
     category = None
     text = None
+    link = ""
+
 
     def __init__(self, task_text):
         self.text = task_text
