@@ -68,7 +68,10 @@ def get_spreadsheet_service():
     return service
 
 
-def add_task(task_name, due_date="", category="Дела", link=""):
+def add_task(task_name, due_date="", category="", link=""):
+    if category == "":
+        category = "Дела"
+
     service = get_spreadsheet_service()
     newvalues = [
         ["", due_date, category, link, task_name]
@@ -153,4 +156,23 @@ def diary(text, date):
         range=range_name,
         valueInputOption=value_input_option,
         body=body).execute()
+    return result_write
+
+
+def money(expense_name, amount, category, date):
+    if category == "":
+        category = "I don't know"
+
+    service = get_spreadsheet_service()
+    newvalues = [
+        [date, category, amount, expense_name]
+    ]
+    body = {
+        'values': newvalues
+    }
+    range_name = 'money_flow!A1:D'
+    value_input_option = 'USER_ENTERED'
+    result_write = service.spreadsheets().values().append(
+        spreadsheetId=money_spreadsheet_id, range=range_name,
+        valueInputOption=value_input_option, body=body).execute()
     return result_write

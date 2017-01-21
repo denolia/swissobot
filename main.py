@@ -102,7 +102,7 @@ def start(bot, update):
     bot.sendMessage(chat_id=update.message.chat_id, text="Hi, guys! What's up?")
 
 
-def help(bot, update):
+def bot_help(bot, update):
     bot.sendChatAction(chat_id=update.message.chat_id,
                        action=ChatAction.TYPING)
     bot.sendMessage(chat_id=update.message.chat_id, text="Ну вы держитесь там")
@@ -144,10 +144,58 @@ def diary(bot, update):
 def money(bot, update):
     bot.sendChatAction(chat_id=update.message.chat_id,
                        action=ChatAction.TYPING)
-    bot.sendMessage(chat_id=update.message.chat_id, text="Not implemented yet")
+    if not allowed_user(bot, update):
+        return
+
+    logging.debug(msg="Adding a money record: " + str(update.message.text))
+
+    with lock:
+        task_str = update.message.text.replace('/money', '').replace('@DnJTodoBot', '').strip().split(',')
+        if update.message.text is None:
+            bot.sendMessage(chat_id=update.message.chat_id, text="No text provided")
+            return
+
+        amount = task_str[0].strip()
+        if amount is "":
+            bot.sendMessage(chat_id=update.message.chat_id, text="Формат: /money сумма [, цель, категория, дата]."
+                                                                 "\nПример: /money 100, котята, Подарки, 05.03")
+            return
+        expense_name = task_str[1].strip() if len(task_str) > 1 else ""
+        category = task_str[2].strip() if len(task_str) > 2 else ""
+        date = task_str[3].strip() if len(task_str) > 3 else str(update.message.date.date())
+
+        try:
+            result = goglemogle.money(expense_name, amount, category, date)
+        except Exception as e:
+            logging.error(msg="A record was not added")
+            bot.sendMessage(chat_id=update.message.chat_id, text="Sorry,\n" + str(e))
+            raise e
+
+        logging.debug(result)
+        reply_msg = update.message.from_user.first_name + ", я добавил расход: " + expense_name
+        bot.sendMessage(chat_id=update.message.chat_id, text=reply_msg)
 
 
-    # goglemogle.add_diary()
+def current_weather(bot, update):
+    bot.sendChatAction(chat_id=update.message.chat_id,
+                       action=ChatAction.TYPING)
+    if not allowed_user(bot, update):
+        return
+
+    logging.debug(msg="Finding out current weather... ")
+    link = "http://api.openweathermap.org/data/2.5/weather?lat=59.95&lon=30.21&appid=d9022c300d4c076fd764ce33996e75ac"
+    import requests
+
+    resp = requests.get(link)
+    if resp.status_code != 200:
+        # This means something went wrong.
+        bot.sendMessage(chat_id=update.message.chat_id, text="Sorry,\n" + str(resp.status_code))
+        raise EnvironmentError('GET /weather?lat=59.95&lon=30.21 {}'.format(resp.status_code))
+
+    logging.info(resp.json())
+    reply_msg = update.message.from_user.first_name + ", погода в СПб " + str(resp.json())
+    bot.sendMessage(chat_id=update.message.chat_id, text=reply_msg)
+
 
 updater = Updater(token='TOKEN')
 
@@ -165,7 +213,10 @@ updater.dispatcher.add_handler(diary_handler)
 money_handler = CommandHandler('money', money)
 updater.dispatcher.add_handler(money_handler)
 
-help_handler = CommandHandler('help', help)
+weather_handler = CommandHandler('weather', current_weather)
+updater.dispatcher.add_handler(weather_handler)
+
+help_handler = CommandHandler('help', bot_help)
 updater.dispatcher.add_handler(help_handler)
 
 # Note: must be the last added to handler
