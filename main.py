@@ -12,7 +12,7 @@ import goglemogle
 from task import Task
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                    level=logging.DEBUG)
+                    level=logging.INFO)
 
 allowed_users = ('daniilbubnov', 'julia_vikulina')
 
@@ -36,7 +36,7 @@ def add_category(bot, update):
 def add(bot, update):
     bot.sendChatAction(chat_id=update.message.chat_id,
                        action=ChatAction.TYPING)
-    logging.debug(msg="Adding a task " + str(update.message))
+    logging.info(msg="Adding a task " + str(update.message))
 
     if not allowed_user(bot, update):
         return
@@ -51,7 +51,7 @@ def add(bot, update):
 
         task_str = update.message.text.replace('/add', '').strip().split(",")
         if task_str[0] == '':
-            logging.debug("Input task is incorrect" + str(update.message.text))
+            logging.info("Input task is incorrect" + str(update.message.text))
             bot.sendMessage(chat_id=update.message.chat_id, text="Формат: /add Имя задачи[, дата, категория, ссылка]")
             return
 
@@ -61,13 +61,13 @@ def add(bot, update):
         link = task_str[3].strip() if len(task_str) > 3 else ""
 
         result = goglemogle.add_task(task_name, due_date, category, link)
-        logging.debug(result)
+        logging.info(result)
         reply_msg = update.message.from_user.first_name + ", я добавил задачу: " + task_name
         bot.sendMessage(chat_id=update.message.chat_id, text=reply_msg)
 
 
 def list_all(bot, update):
-    logging.debug(msg="Listing tasks ")
+    logging.info(msg="Listing tasks ")
     if not allowed_user(bot, update):
         return
 
@@ -88,7 +88,7 @@ def list_all(bot, update):
                 if row[0] == "":
                     todo_str += "* " + row[4] + "\n"
             bot.sendMessage(chat_id=update.message.chat_id, text=todo_str)
-            logging.debug(msg="list of all tasks " + todo_str)
+            logging.info(msg="list of all tasks " + todo_str)
 
         except Exception as e:
             logging.error(e)
@@ -121,7 +121,7 @@ def diary(bot, update):
     if not allowed_user(bot, update):
         return
 
-    logging.debug(msg="Adding a diary record: " + str(update.message))
+    logging.info(msg="Adding a diary record: " + str(update.message))
 
     with lock:
         text = update.message.text.replace('/diary', '').replace('@DnJTodoBot', '').strip()
@@ -136,7 +136,7 @@ def diary(bot, update):
             bot.sendMessage(chat_id=update.message.chat_id, text="Sorry,\n" + str(e))
             raise e
 
-        logging.debug(result)
+        logging.info(result)
         reply_msg = update.message.from_user.first_name + ", я добавил твой пост от " + date
         bot.sendMessage(chat_id=update.message.chat_id, text=reply_msg)
 
@@ -147,7 +147,7 @@ def money(bot, update):
     if not allowed_user(bot, update):
         return
 
-    logging.debug(msg="Adding a money record: " + str(update.message.text))
+    logging.info(msg="Adding a money record: " + str(update.message.text))
 
     with lock:
         task_str = update.message.text.replace('/money', '').replace('@DnJTodoBot', '').strip().split(',')
@@ -171,7 +171,7 @@ def money(bot, update):
             bot.sendMessage(chat_id=update.message.chat_id, text="Sorry,\n" + str(e))
             raise e
 
-        logging.debug(result)
+        logging.info(result)
         reply_msg = update.message.from_user.first_name + ", я добавил расход: " + expense_name
         bot.sendMessage(chat_id=update.message.chat_id, text=reply_msg)
 
@@ -182,7 +182,7 @@ def current_weather(bot, update):
     if not allowed_user(bot, update):
         return
 
-    logging.debug(msg="Finding out current weather... ")
+    logging.info(msg="Finding out current weather... ")
     link = "http://api.openweathermap.org/data/2.5/weather?lat=59.95&lon=30.21&appid=d9022c300d4c076fd764ce33996e75ac"
     import requests
 
