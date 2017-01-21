@@ -20,7 +20,13 @@ SCOPES = 'https://www.googleapis.com/auth/spreadsheets'
 CLIENT_SECRET_FILE = 'client_secret.json'
 APPLICATION_NAME = 'Google Sheets API Python Quickstart'
 
-spreadsheet_id = '1e2vIYYHwm-eHNRRbRtxmws_jIrKb5eIvomroRg4i-cY'
+# this id is extracted from the link to a spreadshit of interest:
+# https://docs.google.com/spreadsheets/d/1-LhCdj8BiY5BM9t21f5hwBJnyNi_KVPcgQC7bG25CU8/edit
+todo_spreadsheet_id = '1-LhCdj8BiY5BM9t21f5hwBJnyNi_KVPcgQC7bG25CU8'
+# https://docs.google.com/spreadsheets/d/1tpiEu-Ou2cVi-382xIwEhLu6BAUOVmH8n8co0At1X8w/edit
+money_spreadsheet_id = '1tpiEu-Ou2cVi-382xIwEhLu6BAUOVmH8n8co0At1X8w'
+# https://docs.google.com/spreadsheets/d/1zgXcb0T7TEaLu0ilcmvuU6fmX_FFoduy_n4HCvo6ekI/edit
+diary_spreadsheet_id = '1zgXcb0T7TEaLu0ilcmvuU6fmX_FFoduy_n4HCvo6ekI'
 
 
 def get_credentials():
@@ -52,40 +58,48 @@ def get_credentials():
     return credentials
 
 
-def add_task(task_name, due_date="", category="Дела", link=""):
+def get_spreadsheet_service():
     credentials = get_credentials()
     http = credentials.authorize(httplib2.Http())
     discoveryUrl = ('https://sheets.googleapis.com/$discovery/rest?'
                     'version=v4')
     service = discovery.build('sheets', 'v4', http=http,
                               discoveryServiceUrl=discoveryUrl)
+    return service
+
+
+def add_task(task_name, due_date="", category="Дела", link=""):
+    service = get_spreadsheet_service()
     newvalues = [
         ["", due_date, category, link, task_name]
     ]
     body = {
         'values': newvalues
     }
-    range_name = 'Sheet1!A1:E'
+    range_name = 'TODO!A1:E'
     value_input_option = 'USER_ENTERED'
     result_write = service.spreadsheets().values().append(
-        spreadsheetId=spreadsheet_id, range=range_name,
+        spreadsheetId=todo_spreadsheet_id, range=range_name,
         valueInputOption=value_input_option, body=body).execute()
     return result_write
 
 
-def main():
-    """Shows basic usage of the Sheets API.
+def list_all():
+    service = get_spreadsheet_service()
+    range_name = 'TODO!A1:E'
 
+    result_read = service.spreadsheets().values().get(
+        spreadsheetId=todo_spreadsheet_id, range=range_name).execute()
+    return result_read.get('values', [])
+
+
+def main():
+    """
     Creates a Sheets API service object and prints the names and majors of
     students in a sample spreadsheet:
     https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit
     """
-    credentials = get_credentials()
-    http = credentials.authorize(httplib2.Http())
-    discoveryUrl = ('https://sheets.googleapis.com/$discovery/rest?'
-                    'version=v4')
-    service = discovery.build('sheets', 'v4', http=http,
-                              discoveryServiceUrl=discoveryUrl)
+    service = get_spreadsheet_service()
 
     newvalues = [
         ["Item", "Cost", "Stocked", "Ship Date"],
@@ -102,12 +116,12 @@ def main():
     range_name = 'Sheet1!A1:D'
     value_input_option = 'USER_ENTERED'
     result_write = service.spreadsheets().values().append(
-        spreadsheetId=spreadsheet_id, range=range_name,
+        spreadsheetId=todo_spreadsheet_id, range=range_name,
         valueInputOption=value_input_option, body=body).execute()
     print(result_write)
 
     result_read = service.spreadsheets().values().get(
-        spreadsheetId=spreadsheet_id, range=range_name).execute()
+        spreadsheetId=todo_spreadsheet_id, range=range_name).execute()
     values = result_read.get('values', [])
 
     if not values:
@@ -121,3 +135,22 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+
+def diary(text, date):
+    service = get_spreadsheet_service()
+    newvalues = [
+        [date, text]
+    ]
+    body = {
+        'values': newvalues
+    }
+    range_name = 'Sheet1!A1:B'
+    value_input_option = 'USER_ENTERED'
+
+    result_write = service.spreadsheets().values().append(
+        spreadsheetId=diary_spreadsheet_id,
+        range=range_name,
+        valueInputOption=value_input_option,
+        body=body).execute()
+    return result_write
