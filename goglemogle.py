@@ -27,6 +27,8 @@ todo_spreadsheet_id = '1-LhCdj8BiY5BM9t21f5hwBJnyNi_KVPcgQC7bG25CU8'
 money_spreadsheet_id = '1tpiEu-Ou2cVi-382xIwEhLu6BAUOVmH8n8co0At1X8w'
 # https://docs.google.com/spreadsheets/d/1zgXcb0T7TEaLu0ilcmvuU6fmX_FFoduy_n4HCvo6ekI/edit
 diary_spreadsheet_id = '1zgXcb0T7TEaLu0ilcmvuU6fmX_FFoduy_n4HCvo6ekI'
+# https://docs.google.com/spreadsheets/d/1tpiEu-Ou2cVi-382xIwEhLu6BAUOVmH8n8co0At1X8w/edit
+money_spreadsheet_id_dad = '1qW7__jgRA0J2-2InfZp3v4mn0Nh-zxGb4anl5JP72a4'
 
 
 def get_credentials():
