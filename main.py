@@ -13,15 +13,21 @@ from task import add, task_list
 from weather import current_weather
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                    level=logging.INFO)
+                    level=logging.DEBUG)
 
 help_text = """
-Привет! Я понимаю следующие команды:
+Привет! Доступные команды:
 /money сумма [, цель, категория, дата]
 /diary запись
-/task задача [, ]
+/task Имя задачи [, категория, дата, ссылка]
+/tasklist - показать список всех актуальных задач
+/weather - показать погоду
 
-Пример: /money 100, котята, Подарки, 05.03
+
+Примеры:
+/money 100, котята, Подарки, 05.03
+/diary запись
+/task Погладить рубашку, Дела, 21.01, google.com
 """
 
 
@@ -35,7 +41,7 @@ def bot_help(bot, update):
 
     bot.sendChatAction(chat_id=update.message.chat_id,
                        action=ChatAction.TYPING)
-    bot.sendMessage(chat_id=update.message.chat_id, text="Ну вы держитесь там")
+    bot.sendMessage(chat_id=update.message.chat_id, text=help_text)
 
 
 def unknown(bot, update):

@@ -14,8 +14,9 @@ def allowed_user(bot, update) -> bool:
 
 def check_user_type(bot, update) -> str:
     for group in user_group:
-        if update.message.from_user.username not in user_group.get(group):
-            bot.sendMessage(chat_id=update.message.chat_id, text="Access denied")
+        if update.message.from_user.username in user_group.get(group):
             return group
+
+    bot.sendMessage(chat_id=update.message.chat_id, text="Access denied")
     logging.info("Access denied for " + update.message.from_user.username)
     return ""

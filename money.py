@@ -4,7 +4,7 @@ from threading import Lock
 from telegram import ChatAction
 
 import goglemogle
-from user_check import allowed_user
+from user_check import check_user_type
 
 lock = Lock()
 
@@ -12,8 +12,9 @@ lock = Lock()
 def money(bot, update):
     bot.sendChatAction(chat_id=update.message.chat_id,
                        action=ChatAction.TYPING)
-    # TODO return user type
-    if not allowed_user(bot, update):
+
+    user_group = check_user_type(bot, update)
+    if user_group is None or user_group == "":
         return
 
     logging.info(msg="Adding a money record: " + str(update.message.text))
@@ -34,7 +35,7 @@ def money(bot, update):
         date = task_str[3].strip() if len(task_str) > 3 else str(update.message.date.date())
 
         try:
-            result = goglemogle.money(expense_name, amount, category, date)
+            result = goglemogle.money(user_group, expense_name, amount, category, date)
         except Exception as e:
             logging.error(msg="A record was not added")
             bot.sendMessage(chat_id=update.message.chat_id, text="Sorry,\n" + str(e))

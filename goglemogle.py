@@ -22,13 +22,14 @@ APPLICATION_NAME = 'Google Sheets API Python Quickstart'
 
 # this id is extracted from the link to a spreadshit of interest:
 # https://docs.google.com/spreadsheets/d/1-LhCdj8BiY5BM9t21f5hwBJnyNi_KVPcgQC7bG25CU8/edit
-todo_spreadsheet_id = '1-LhCdj8BiY5BM9t21f5hwBJnyNi_KVPcgQC7bG25CU8'
+todo_spreadsheet_id = {'d&j': '1-LhCdj8BiY5BM9t21f5hwBJnyNi_KVPcgQC7bG25CU8',
+                       'dad': ''}
 # https://docs.google.com/spreadsheets/d/1tpiEu-Ou2cVi-382xIwEhLu6BAUOVmH8n8co0At1X8w/edit
-money_spreadsheet_id = '1tpiEu-Ou2cVi-382xIwEhLu6BAUOVmH8n8co0At1X8w'
+# https://docs.google.com/spreadsheets/d/1tpiEu-Ou2cVi-382xIwEhLu6BAUOVmH8n8co0At1X8w/edit
+money_spreadsheet_id = {'d&j': '1tpiEu-Ou2cVi-382xIwEhLu6BAUOVmH8n8co0At1X8w',
+                        'dad': '1qW7__jgRA0J2-2InfZp3v4mn0Nh-zxGb4anl5JP72a4'}
 # https://docs.google.com/spreadsheets/d/1zgXcb0T7TEaLu0ilcmvuU6fmX_FFoduy_n4HCvo6ekI/edit
 diary_spreadsheet_id = '1zgXcb0T7TEaLu0ilcmvuU6fmX_FFoduy_n4HCvo6ekI'
-# https://docs.google.com/spreadsheets/d/1tpiEu-Ou2cVi-382xIwEhLu6BAUOVmH8n8co0At1X8w/edit
-money_spreadsheet_id_dad = '1qW7__jgRA0J2-2InfZp3v4mn0Nh-zxGb4anl5JP72a4'
 
 
 def get_credentials():
@@ -70,7 +71,7 @@ def get_spreadsheet_service():
     return service
 
 
-def add_task(task_name, due_date="", category="", link=""):
+def add_task(user_group, task_name, due_date="", category="", link=""):
     if category == "":
         category = "Дела"
 
@@ -84,7 +85,7 @@ def add_task(task_name, due_date="", category="", link=""):
     range_name = 'TODO!A1:E'
     value_input_option = 'USER_ENTERED'
     result_write = service.spreadsheets().values().append(
-        spreadsheetId=todo_spreadsheet_id, range=range_name,
+        spreadsheetId=todo_spreadsheet_id.get(user_group), range=range_name,
         valueInputOption=value_input_option, body=body).execute()
     return result_write
 
@@ -161,7 +162,7 @@ def diary(text, date):
     return result_write
 
 
-def money(expense_name, amount, category, date):
+def money(user_group, expense_name, amount, category, date):
     if category == "":
         category = "I don't know"
 
@@ -174,7 +175,8 @@ def money(expense_name, amount, category, date):
     }
     range_name = 'money_flow!A1:D'
     value_input_option = 'USER_ENTERED'
+
     result_write = service.spreadsheets().values().append(
-        spreadsheetId=money_spreadsheet_id, range=range_name,
+        spreadsheetId=money_spreadsheet_id.get(user_group), range=range_name,
         valueInputOption=value_input_option, body=body).execute()
     return result_write
