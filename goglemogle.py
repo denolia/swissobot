@@ -25,7 +25,7 @@ APPLICATION_NAME = 'Google Sheets API Python Quickstart'
 todo_spreadsheet_id = {'d&j': '1-LhCdj8BiY5BM9t21f5hwBJnyNi_KVPcgQC7bG25CU8',
                        'dad': ''}
 # https://docs.google.com/spreadsheets/d/1tpiEu-Ou2cVi-382xIwEhLu6BAUOVmH8n8co0At1X8w/edit
-# https://docs.google.com/spreadsheets/d/1tpiEu-Ou2cVi-382xIwEhLu6BAUOVmH8n8co0At1X8w/edit
+# https://docs.google.com/spreadsheets/d/1qW7__jgRA0J2-2InfZp3v4mn0Nh-zxGb4anl5JP72a4/edit
 money_spreadsheet_id = {'d&j': '1tpiEu-Ou2cVi-382xIwEhLu6BAUOVmH8n8co0At1X8w',
                         'dad': '1qW7__jgRA0J2-2InfZp3v4mn0Nh-zxGb4anl5JP72a4'}
 # https://docs.google.com/spreadsheets/d/1zgXcb0T7TEaLu0ilcmvuU6fmX_FFoduy_n4HCvo6ekI/edit
@@ -90,7 +90,7 @@ def add_task(user_group, task_name, due_date="", category="", link=""):
     return result_write
 
 
-def list_all():
+def list_all(user_group):
     service = get_spreadsheet_service()
     range_name = 'TODO!A1:E'
 
@@ -99,7 +99,7 @@ def list_all():
     return result_read.get('values', [])
 
 
-def get_categories():
+def get_categories(user_group):
     service = get_spreadsheet_service()
     range_name = 'categories!A1:A2'
 

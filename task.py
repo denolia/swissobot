@@ -4,7 +4,7 @@ from threading import Lock
 from telegram import ChatAction
 
 import goglemogle
-from user_check import allowed_user, check_user_type
+from user_check import check_user_type
 
 
 def add_category(bot, update):
@@ -16,8 +16,6 @@ lock = Lock()
 
 
 def add(bot, update):
-    bot.sendChatAction(chat_id=update.message.chat_id,
-                       action=ChatAction.TYPING)
     logging.info(msg="Adding a task " + str(update.message))
 
     user_group = check_user_type(bot, update)
@@ -27,15 +25,17 @@ def add(bot, update):
     if update.message.text is None:
         return
 
+    bot.sendChatAction(chat_id=update.message.chat_id,
+                       action=ChatAction.TYPING)
     with lock:
         task_str = update.message.text \
             .replace('/task', '') \
             .replace('@DnJTodoBot', '') \
             .strip() \
-            .split(",")
+            .split(";")
         if task_str[0] == '':
             logging.info("Input task is empty" + str(update.message.text))
-            bot.sendMessage(chat_id=update.message.chat_id, text="Формат: /task Имя задачи [, категория, дата, ссылка]")
+            bot.sendMessage(chat_id=update.message.chat_id, text="Формат: /task Имя задачи [; категория; дата; ссылка]")
             return
 
         task_name = task_str[0].strip()
@@ -51,29 +51,54 @@ def add(bot, update):
 
 def task_list(bot, update):
     logging.info(msg="Listing tasks ")
-    if not allowed_user(bot, update):
+
+    user_group = check_user_type(bot, update)
+    if user_group != "d&j":
         return
 
     bot.sendMessage(chat_id=update.message.chat_id, text="I have something for you:")
+
     bot.sendChatAction(chat_id=update.message.chat_id,
                        action=ChatAction.TYPING)
-    values = goglemogle.list_all()
+    try:
+        values = goglemogle.list_all(user_group)
+    except Exception as e:
+        logging.error(e)
+        bot.sendMessage(chat_id=update.message.chat_id, text="Sorry,\n" + str(e))
+        raise e
+
     if not values:
         logging.error(msg="empty response from google sheet")
-        bot.sendMessage(chat_id=update.message.chat_id, text="Ups. I cannot find anything.")
+        bot.sendMessage(chat_id=update.message.chat_id,
+                        text="Oops. I cannot find anything. \nHave you finished everything? Amazing!")
     else:
         try:
-            # get rid of the title rows
-            values = values[3:]
-            todo_str = ""
-            # append only actual task names
-            for row in values:
-                if row[0] == "":
-                    todo_str += "* " + row[4] + "\n"
-            bot.sendMessage(chat_id=update.message.chat_id, text=todo_str)
-            logging.info(msg="list of all tasks " + todo_str)
+            print_task_list(bot, update, values)
 
         except Exception as e:
             logging.error(e)
             bot.sendMessage(chat_id=update.message.chat_id, text="Sorry,\n" + str(e))
             raise e
+
+
+def print_task_list(bot, update, values):
+    # get rid of the title rows
+    values = values[3:]
+    todo_str = ""
+    task_number = 0
+    # append only actual task names
+    for row in values:
+        if row[0] == "":
+            task_number += 1
+            todo_str += "* " + row[4] + "\n"
+            # print by chunks of 10 tasks
+            if task_number >= 10:
+                bot.sendMessage(chat_id=update.message.chat_id, text=todo_str)
+                logging.info(msg="list of tasks " + todo_str)
+                task_number = 0
+                todo_str = ""
+
+    # print the rest part
+    if todo_str != "":
+        bot.sendMessage(chat_id=update.message.chat_id, text=todo_str)
+        logging.info(msg="list of tasks " + todo_str)

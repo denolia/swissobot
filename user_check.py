@@ -2,7 +2,7 @@ import logging
 
 allowed_users = ('daniilbubnov', 'julia_vikulina')
 user_group = {'d&j': ['daniilbubnov', 'julia_vikulina'],
-              'dad': []}
+              'dad': ['Vikulinonline']}
 
 
 def allowed_user(bot, update) -> bool:

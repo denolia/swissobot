@@ -13,41 +13,44 @@ from task import add, task_list
 from weather import current_weather
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                    level=logging.DEBUG)
+                    level=logging.INFO)
 
 help_text = """
-Привет! Доступные команды:
-/money сумма [, цель, категория, дата]
+Доступные команды:
+/money сумма [; цель; категория; дата]
 /diary запись
-/task Имя задачи [, категория, дата, ссылка]
+/task Имя задачи [; категория; дата; ссылка]
 /tasklist - показать список всех актуальных задач
 /weather - показать погоду
 
 
 Примеры:
-/money 100, котята, Подарки, 05.03
+/money 100; котята; Подарки; 05.03
 /diary запись
-/task Погладить рубашку, Дела, 21.01, google.com
+/task Погладить рубашку; Дела; 21.01; google.com
 """
 
 
 def start(bot, update):
     bot.sendChatAction(chat_id=update.message.chat_id,
                        action=ChatAction.TYPING)
-    bot.sendMessage(chat_id=update.message.chat_id, text="Hi, guys! What's up?")
+    bot.sendMessage(chat_id=update.message.chat_id,
+                    text="Hi, guys! Welcome to the awesome multifunctional bot!\n" + help_text)
 
 
 def bot_help(bot, update):
 
     bot.sendChatAction(chat_id=update.message.chat_id,
                        action=ChatAction.TYPING)
-    bot.sendMessage(chat_id=update.message.chat_id, text=help_text)
+    bot.sendMessage(chat_id=update.message.chat_id,
+                    text=help_text)
 
 
 def unknown(bot, update):
     bot.sendChatAction(chat_id=update.message.chat_id,
                        action=ChatAction.TYPING)
-    bot.sendMessage(chat_id=update.message.chat_id, text="Sorry, I didn't understand that command.")
+    bot.sendMessage(chat_id=update.message.chat_id,
+                    text="Sorry, I didn't understand that command.")
 
 
 updater = Updater(token='TOKEN')

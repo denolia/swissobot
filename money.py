@@ -20,15 +20,15 @@ def money(bot, update):
     logging.info(msg="Adding a money record: " + str(update.message.text))
 
     with lock:
-        task_str = update.message.text.replace('/money', '').replace('@DnJTodoBot', '').strip().split(',')
+        task_str = update.message.text.replace('/money', '').replace('@DnJTodoBot', '').strip().split(';')
         if update.message.text is None:
             bot.sendMessage(chat_id=update.message.chat_id, text="No text provided")
             return
 
         amount = task_str[0].strip()
         if amount is "":
-            bot.sendMessage(chat_id=update.message.chat_id, text="Формат: /money сумма [, цель, категория, дата]."
-                                                                 "\nПример: /money 100, котята, Подарки, 05.03")
+            bot.sendMessage(chat_id=update.message.chat_id, text="Формат: /money сумма [; цель; категория; дата]."
+                                                                 "\nПример: /money 100; котята; Подарки; 05.03")
             return
         expense_name = task_str[1].strip() if len(task_str) > 1 else ""
         category = task_str[2].strip() if len(task_str) > 2 else ""
