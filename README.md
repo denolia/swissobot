@@ -1,7 +1,7 @@
 # Links: #
 
-https://developers.google.com/sheets/api/quickstart/python
-
+* [Google sheets api quickstart]https://developers.google.com/sheets/api/quickstart/python
+* [github page of python-telegram-bot]https://github.com/python-telegram-bot/python-telegram-bot
 
 # PIP3 #
 
