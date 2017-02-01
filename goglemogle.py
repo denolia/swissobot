@@ -1,6 +1,6 @@
 import os
-
 import httplib2
+
 from apiclient import discovery
 from oauth2client import client
 from oauth2client import tools
@@ -95,7 +95,16 @@ def list_all():
     range_name = 'TODO!A1:E'
 
     result_read = service.spreadsheets().values().get(
-        spreadsheetId=todo_spreadsheet_id, range=range_name).execute()
+        spreadsheetId=todo_spreadsheet_id.get(user_group), range=range_name).execute()
+    return result_read.get('values', [])
+
+
+def get_categories():
+    service = get_spreadsheet_service()
+    range_name = 'categories!A1:A2'
+
+    result_read = service.spreadsheets().values().get(
+        spreadsheetId=todo_spreadsheet_id.get(user_group), range=range_name).execute()
     return result_read.get('values', [])
 
 
