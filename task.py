@@ -43,7 +43,13 @@ def task(bot, update):
         due_date = task_str[2].strip() if len(task_str) > 2 else ""
         link = task_str[3].strip() if len(task_str) > 3 else ""
 
-        result = goglemogle.add_task(user_group, task_name, due_date, category, link)
+        try:
+            result = goglemogle.add_task(user_group, task_name, due_date, category, link)
+        except Exception as e:
+            logging.error(e)
+            bot.sendMessage(chat_id=update.message.chat_id, text="Sorry,\n" + str(e))
+            raise e
+
         logging.info(result)
         reply_msg = update.message.from_user.first_name + ", я добавил задачу: " + task_name
         bot.sendMessage(chat_id=update.message.chat_id, text=reply_msg)
@@ -102,3 +108,43 @@ def print_task_list(bot, update, values):
     if todo_str != "":
         bot.sendMessage(chat_id=update.message.chat_id, text=todo_str)
         logging.info(msg="list of tasks " + todo_str)
+
+
+def done_task(bot, update):
+    logging.info(msg="Finishing a task " + str(update.message))
+
+    user_group = check_user_type(bot, update)
+    if user_group is None or user_group == "":
+        return
+
+    if update.message.text is None:
+        return
+
+    bot.sendChatAction(chat_id=update.message.chat_id,
+                       action=ChatAction.TYPING)
+    with lock:
+        task_str = update.message.text \
+            .replace('/done', '') \
+            .replace('@DnJTodoBot', '') \
+            .strip()
+        if task_str == '':
+            logging.info("String with task id is empty" + str(update.message.text))
+            bot.sendMessage(chat_id=update.message.chat_id, text="Формат: /done id")
+            return
+
+        try:
+            task_id = int(task_str)
+            result = goglemogle.finish_task(user_group, task_id)
+        except Exception as e:
+            logging.error(e)
+            bot.sendMessage(chat_id=update.message.chat_id, text="Sorry,\n" + str(e))
+            raise e
+
+        if result is False:
+            logging.info(result)
+            reply_msg = update.message.from_user.first_name + ", эта задача уже была завершена"
+            bot.sendMessage(chat_id=update.message.chat_id, text=reply_msg)
+        else:
+            logging.info(result)
+            reply_msg = update.message.from_user.first_name + ", я завершил задачу " + str(task_id)
+            bot.sendMessage(chat_id=update.message.chat_id, text=reply_msg)

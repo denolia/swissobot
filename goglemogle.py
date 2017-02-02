@@ -71,18 +71,31 @@ def get_spreadsheet_service():
     return service
 
 
+def get_id(user_group):
+    service = get_spreadsheet_service()
+    range_name = 'TODO!F1'
+    result_read = service.spreadsheets().values().get(
+        spreadsheetId=todo_spreadsheet_id.get(user_group), range=range_name).execute()
+    id_list = result_read.get('values', [])
+    return int(id_list[0][0])
+
+
 def add_task(user_group, task_name, due_date="", category="", link=""):
     if category == "":
         category = "Дела"
 
     service = get_spreadsheet_service()
+
+    task_id = get_id(user_group)
+
+
     newvalues = [
-        ["", due_date, category, link, task_name]
+        ["", due_date, category, link, task_name, task_id + 1]
     ]
     body = {
         'values': newvalues
     }
-    range_name = 'TODO!A1:E'
+    range_name = 'TODO!A1:F'
     value_input_option = 'USER_ENTERED'
     result_write = service.spreadsheets().values().append(
         spreadsheetId=todo_spreadsheet_id.get(user_group), range=range_name,
@@ -97,6 +110,41 @@ def task_list(user_group):
     result_read = service.spreadsheets().values().get(
         spreadsheetId=todo_spreadsheet_id.get(user_group), range=range_name).execute()
     return result_read.get('values', [])
+
+
+def find_task_to_finish(tasks, task_id):
+    for row in range(3, len(tasks)):
+        if int(tasks[row][5]) == task_id:
+            return row + 1
+    return None
+
+
+def finish_task(user_group, task_id):
+    service = get_spreadsheet_service()
+
+    tasks = task_list(user_group)
+    row_address = find_task_to_finish(tasks, task_id)
+
+    if row_address is None:
+        raise ValueError("Task is not found")
+
+    # check if it not set done
+    if tasks[row_address - 1][0] != "":
+        return False
+
+    newvalues = [
+        ["*"]
+    ]
+    body = {
+        'values': newvalues
+    }
+    range_name = 'TODO!A{}'.format(row_address)
+    value_input_option = 'USER_ENTERED'
+
+    result_write = service.spreadsheets().values().update(
+        spreadsheetId=todo_spreadsheet_id.get(user_group), range=range_name,
+        valueInputOption=value_input_option, body=body).execute()
+    return result_write
 
 
 def get_categories(user_group):
@@ -190,3 +238,5 @@ def money(user_group, expense_name, amount, category, date):
         spreadsheetId=money_spreadsheet_id.get(user_group), range=range_name,
         valueInputOption=value_input_option, body=body).execute()
     return result_write
+
+
