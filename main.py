@@ -9,7 +9,7 @@ from telegram.ext import Updater, CommandHandler, CallbackQueryHandler
 
 from diary import diary
 from money_kbd_categories import money, button, error
-from task import add, task_list
+from task import task, task_list
 from weather import current_weather
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -56,7 +56,7 @@ def unknown(bot, update):
 updater = Updater(token='TOKEN')
 
 updater.dispatcher.add_handler( CommandHandler('start', start))
-updater.dispatcher.add_handler( CommandHandler('task', add)
+updater.dispatcher.add_handler( CommandHandler('task', task)
 )
 
 updater.dispatcher.add_handler(CommandHandler('tasklist', task_list))

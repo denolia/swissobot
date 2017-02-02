@@ -15,7 +15,7 @@ def add_category(bot, update):
 lock = Lock()
 
 
-def add(bot, update):
+def task(bot, update):
     logging.info(msg="Adding a task " + str(update.message))
 
     user_group = check_user_type(bot, update)
@@ -61,7 +61,7 @@ def task_list(bot, update):
     bot.sendChatAction(chat_id=update.message.chat_id,
                        action=ChatAction.TYPING)
     try:
-        values = goglemogle.list_all(user_group)
+        values = goglemogle.task_list(user_group)
     except Exception as e:
         logging.error(e)
         bot.sendMessage(chat_id=update.message.chat_id, text="Sorry,\n" + str(e))
@@ -90,7 +90,7 @@ def print_task_list(bot, update, values):
     for row in values:
         if row[0] == "":
             task_number += 1
-            todo_str += "* " + row[4] + "\n"
+            todo_str += "[" + row[5] + "] " + row[4] + "\n"
             # print by chunks of 10 tasks
             if task_number >= 10:
                 bot.sendMessage(chat_id=update.message.chat_id, text=todo_str)

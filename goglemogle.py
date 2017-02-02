@@ -90,9 +90,9 @@ def add_task(user_group, task_name, due_date="", category="", link=""):
     return result_write
 
 
-def list_all(user_group):
+def task_list(user_group):
     service = get_spreadsheet_service()
-    range_name = 'TODO!A1:E'
+    range_name = 'TODO!A1:F'
 
     result_read = service.spreadsheets().values().get(
         spreadsheetId=todo_spreadsheet_id.get(user_group), range=range_name).execute()
