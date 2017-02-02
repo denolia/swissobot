@@ -2,13 +2,13 @@
 import logging
 
 from telegram import ChatAction
-from telegram.ext import CommandHandler
 from telegram.ext import Filters
 from telegram.ext import MessageHandler
-from telegram.ext import Updater
+from telegram.ext import Updater, CommandHandler, CallbackQueryHandler
+
 
 from diary import diary
-from money import money
+from money_kbd_categories import money, button, error
 from task import add, task_list
 from weather import current_weather
 
@@ -17,7 +17,7 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 
 help_text = """
 Доступные команды:
-/money сумма [; цель; категория; дата]
+/money сумма [; цель; дата]
 /diary запись
 /task Имя задачи [; категория; дата; ссылка]
 /tasklist - показать список всех актуальных задач
@@ -25,7 +25,7 @@ help_text = """
 
 
 Примеры:
-/money 100; котята; Подарки; 05.03
+/money 100; котята; 05.03
 /diary запись
 /task Погладить рубашку; Дела; 21.01; google.com
 """
@@ -55,28 +55,35 @@ def unknown(bot, update):
 
 updater = Updater(token='TOKEN')
 
-start_handler = CommandHandler('start', start)
-updater.dispatcher.add_handler(start_handler)
-add_handler = CommandHandler('task', add)
-updater.dispatcher.add_handler(add_handler)
+updater.dispatcher.add_handler( CommandHandler('start', start))
+updater.dispatcher.add_handler( CommandHandler('task', add)
+)
 
-tasklist_handler = CommandHandler('tasklist', task_list)
-updater.dispatcher.add_handler(tasklist_handler)
+updater.dispatcher.add_handler(CommandHandler('tasklist', task_list))
 
-diary_handler = CommandHandler('diary', diary)
-updater.dispatcher.add_handler(diary_handler)
+updater.dispatcher.add_handler(CommandHandler('diary', diary))
 
-money_handler = CommandHandler('money', money)
-updater.dispatcher.add_handler(money_handler)
+updater.dispatcher.add_handler(CommandHandler('money', money))
 
-weather_handler = CommandHandler('weather', current_weather)
-updater.dispatcher.add_handler(weather_handler)
+updater.dispatcher.add_handler(CallbackQueryHandler(button))
 
-help_handler = CommandHandler('help', bot_help)
-updater.dispatcher.add_handler(help_handler)
+updater.dispatcher.add_handler(CommandHandler('weather', current_weather))
+
+updater.dispatcher.add_handler(CommandHandler('help', bot_help))
+
+updater.dispatcher.add_error_handler(error)
 
 # Note: must be the last added to handler
-unknown_handler = MessageHandler(Filters.command, unknown)
-updater.dispatcher.add_handler(unknown_handler)
+updater.dispatcher.add_handler(MessageHandler(Filters.command, unknown))
 
 updater.start_polling()  # поехали!
+
+
+
+
+# Start the Bot
+updater.start_polling()
+
+# Run the bot until the user presses Ctrl-C or the process receives SIGINT,
+# SIGTERM or SIGABRT
+updater.idle()

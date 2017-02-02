@@ -101,11 +101,12 @@ def list_all(user_group):
 
 def get_categories(user_group):
     service = get_spreadsheet_service()
-    range_name = 'categories!A1:A2'
+    range_name = 'categories!A:A'
 
     result_read = service.spreadsheets().values().get(
-        spreadsheetId=todo_spreadsheet_id.get(user_group), range=range_name).execute()
-    return result_read.get('values', [])
+        spreadsheetId=money_spreadsheet_id.get(user_group), range=range_name).execute()
+
+    return [i[0] for i in result_read.get('values', [])]   # flattening
 
 
 def main():
