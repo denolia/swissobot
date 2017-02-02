@@ -132,8 +132,10 @@ def done_task(bot, update):
             bot.sendMessage(chat_id=update.message.chat_id, text="Формат: /done id")
             return
 
+        # TODO check what if it is not int
+        task_id = int(task_str)
+
         try:
-            task_id = int(task_str)
             result = goglemogle.finish_task(user_group, task_id)
         except Exception as e:
             logging.error(e)
