@@ -240,3 +240,10 @@ def money(user_group, expense_name, amount, category, date):
     return result_write
 
 
+def money_list(user_group):
+    service = get_spreadsheet_service()
+    range_name = 'money_flow!A2:D'
+
+    result_read = service.spreadsheets().values().get(
+        spreadsheetId=money_spreadsheet_id.get(user_group), range=range_name).execute()
+    return result_read.get('values', [])

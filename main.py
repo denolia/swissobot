@@ -8,7 +8,7 @@ from telegram.ext import Updater, CommandHandler, CallbackQueryHandler
 
 
 from diary import diary
-from money_kbd_categories import money, button, error
+from money_kbd_categories import money_handler, button, error, money_list_handler
 from task import task, task_list, done_task
 from weather import current_weather
 
@@ -65,7 +65,9 @@ updater.dispatcher.add_handler(CommandHandler('done', done_task))
 
 updater.dispatcher.add_handler(CommandHandler('diary', diary))
 
-updater.dispatcher.add_handler(CommandHandler('money', money))
+updater.dispatcher.add_handler(CommandHandler('money', money_handler))
+
+updater.dispatcher.add_handler(CommandHandler('moneylist', money_list_handler))
 
 updater.dispatcher.add_handler(CallbackQueryHandler(button))
 

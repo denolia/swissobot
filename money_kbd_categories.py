@@ -1,6 +1,7 @@
-
+import datetime
 import logging
 from threading import Lock
+from dateutil.parser import parse
 
 from telegram import ChatAction
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
@@ -19,7 +20,7 @@ lock = Lock()
 EXPENSE = {}
 
 
-def money(bot, update):
+def money_handler(bot, update):
     logging.info(msg="Adding a money record: " + str(update.message.text))
     user_group = check_user_type(bot, update)
     if user_group != "d&j":
@@ -45,11 +46,16 @@ def money(bot, update):
         global EXPENSE
         EXPENSE.update({update.message.from_user.username: [amount, expense_name, date]})
 
+    reply_markup = compose_categories_kbd(user_group)
+
+    update.message.reply_text('Please choose category:', reply_markup=reply_markup)
+
+
+def compose_categories_kbd(user_group):
     cat = CATEGORIES.get(user_group)
     if cat is None:
         cat = get_categories(user_group)
         CATEGORIES.update({user_group: cat})
-
     cat_num = len(cat)
     cat_rows = ceil(cat_num / 3)
     keyboard = []
@@ -59,10 +65,87 @@ def money(bot, update):
             cat_index = 3 * row_num + col_num
             row.append(InlineKeyboardButton(cat[cat_index], callback_data=str(cat_index)))
         keyboard.append(row)
-
     reply_markup = InlineKeyboardMarkup(keyboard)
+    return reply_markup
 
-    update.message.reply_text('Please choose category:', reply_markup=reply_markup)
+
+def money_list_handler(bot, update):
+    logging.info(msg="Getting list of expenses for a date: " + str(update.message.text))
+    user_group = check_user_type(bot, update)
+    if user_group != "d&j":
+        return
+
+    bot.sendChatAction(chat_id=update.message.chat_id,
+                       action=ChatAction.TYPING)
+
+    if update.message.text is None:
+        bot.sendMessage(chat_id=update.message.chat_id, text="No text provided")
+        return
+
+    task_str = update.message.text.replace('/moneylist', '').replace('@DnJTodoBot', '').strip().split(';')
+
+    date = parse(task_str[0].strip()).date()
+    if date is "":
+        date = update.message.date.date()
+
+    try:
+        values = goglemogle.money_list(user_group)
+    except Exception as e:
+        logging.error(e)
+        bot.sendMessage(chat_id=update.message.chat_id, text="Sorry,\n" + str(e))
+        raise e
+
+    if not values:
+        logging.error(msg="empty response from google sheet")
+        bot.sendMessage(chat_id=update.message.chat_id,
+                        text="Oops. I cannot find anything.")
+    else:
+        try:
+            print_money_list(bot, update, values, date)
+
+        except Exception as e:
+            logging.error(e)
+            bot.sendMessage(chat_id=update.message.chat_id, text="Sorry,\n" + str(e))
+            raise e
+            # go to google spreadsheet
+            # obtain full list of expenses
+            # choose only those with the requested date
+            # send a message
+
+
+def print_money_list(bot, update, values, date: datetime.date):
+
+    money_str = ""
+    expense_number = 0
+    row_found_flag = False
+
+    row_address = 1     # to start from 2
+    for row in values:
+        row_address += 1
+        expense_date = parse(row[0]).date()
+        if expense_date == date:
+            row_found_flag = True
+            expense_number += 1
+            money_str += "[{row}] {date}; {cat}; {value}; {aim}\n".format(row=row_address,
+                                                                        date=row[0],
+                                                                        cat=row[1],
+                                                                        value=row[2],
+                                                                        aim=row[3])
+            # print by chunks of 10 tasks
+            if expense_number >= 10:
+                bot.sendMessage(chat_id=update.message.chat_id, text=money_str)
+                logging.info(msg="list of expenses " + money_str)
+                expense_number = 0
+                money_str = ""
+
+    # print the rest part
+    if money_str != "":
+        bot.sendMessage(chat_id=update.message.chat_id, text=money_str)
+        logging.info(msg="list of expenses " + money_str)
+
+    if not row_found_flag:
+        bot.sendMessage(chat_id=update.message.chat_id, text="Nothing was found for date: {date}".format(date=date))
+        logging.info(msg="list of expenses " + money_str)
 
 
 def button(bot, update):
