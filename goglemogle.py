@@ -247,3 +247,25 @@ def money_list(user_group):
     result_read = service.spreadsheets().values().get(
         spreadsheetId=money_spreadsheet_id.get(user_group), range=range_name).execute()
     return result_read.get('values', [])
+
+
+def edit_expense(user_group, row_address, date, category, value, aim):
+    service = get_spreadsheet_service()
+
+    if row_address is None:
+        raise ValueError("Expense is not found")
+
+    newvalues = [
+        [date, category, value, aim]
+    ]
+    body = {
+        'values': newvalues
+    }
+    range_name = 'money_flow!A{}:D{}'.format(row_address, row_address)
+    value_input_option = 'USER_ENTERED'
+
+    result_write = service.spreadsheets().values().update(
+        spreadsheetId=money_spreadsheet_id.get(user_group), range=range_name,
+        valueInputOption=value_input_option, body=body).execute()
+    return result_write
+

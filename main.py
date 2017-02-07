@@ -8,7 +8,7 @@ from telegram.ext import Updater, CommandHandler, CallbackQueryHandler
 
 
 from diary import diary
-from money_kbd_categories import money_handler, button, error, money_list_handler
+from money_kbd_categories import money_handler, button, error, money_list_handler, edit_expense_handler
 from task import task, task_list, done_task
 from weather import current_weather
 
@@ -18,6 +18,9 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 help_text = """
 Доступные команды:
 /money сумма [; цель; дата]
+/moneylist [дата] - список расходов за дату с id
+/moneyedit id; дата; категория; сумма; цель - изменить запись о расходе по id
+
 /diary запись
 /task Имя задачи [; категория; дата; ссылка]
 /tasklist - показать список всех актуальных задач
@@ -68,6 +71,8 @@ updater.dispatcher.add_handler(CommandHandler('diary', diary))
 updater.dispatcher.add_handler(CommandHandler('money', money_handler))
 
 updater.dispatcher.add_handler(CommandHandler('moneylist', money_list_handler))
+
+updater.dispatcher.add_handler(CommandHandler('moneyedit', edit_expense_handler))
 
 updater.dispatcher.add_handler(CallbackQueryHandler(button))
 
