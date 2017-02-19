@@ -68,6 +68,41 @@ def money_handler(bot, update):
     update.message.reply_text('Please choose category:', reply_markup=reply_markup)
 
 
+def money_callback_handler(bot, update):
+    query = update.callback_query
+    user = query.from_user.username
+    user_group = get_user_group(user)
+    if user_group == "":
+        return
+
+    category = CATEGORIES.get(user_group)[int(query.data)]
+
+    bot.editMessageText(text="Выбрана категория: {}".format(category),
+                        chat_id=query.message.chat_id,
+                        message_id=query.message.message_id)
+
+    expense_data = EXPENSE.get(user)
+    amount = expense_data[0]
+    expense_name = expense_data[1]
+    date = expense_data[2]
+
+    try:
+        result = goglemogle.money(user_group, expense_name, amount, category, date)
+    except Exception as e:
+        logging.error(msg="A record was not added")
+        bot.sendMessage(chat_id=update.message.chat_id, text="Sorry,\n" + str(e))
+        raise e
+
+    logging.info(result)
+    reply_msg = "{}, я добавил расход: {}; {}; {}; {}".format(query.from_user.first_name,
+                                                              amount,
+                                                              expense_name,
+                                                              category,
+                                                              date)
+
+    bot.sendMessage(chat_id=update.callback_query.message.chat_id, text=reply_msg)
+
+
 def handle_error(bot, update, custom_msg='', exception=None):
     msg = '{custom_msg}\n{format}\n{example}'.format(custom_msg=custom_msg,
                                                      format=commands.MONEY_COMMAND.format,
@@ -173,45 +208,6 @@ def print_money_list(bot, update, values, date: datetime.date):
     if not row_found_flag:
         bot.sendMessage(chat_id=update.message.chat_id, text="Nothing was found for date: {date}".format(date=date))
         logging.info(msg="no expenses for date {date}".format(date=date))
-
-
-def money_callback_handler(bot, update):
-    query = update.callback_query
-    user = query.from_user.username
-    user_group = get_user_group(user)
-    if user_group == "":
-        return
-
-    category = CATEGORIES.get(user_group)[int(query.data)]
-
-    bot.editMessageText(text="Выбрана категория: {}".format(category),
-                        chat_id=query.message.chat_id,
-                        message_id=query.message.message_id)
-
-    expense_data = EXPENSE.get(user)
-    amount = expense_data[0]
-    expense_name = expense_data[1]
-    date = expense_data[2]
-
-    try:
-        result = goglemogle.money(user_group, expense_name, amount, category, date)
-    except Exception as e:
-        logging.error(msg="A record was not added")
-        bot.sendMessage(chat_id=update.message.chat_id, text="Sorry,\n" + str(e))
-        raise e
-
-    logging.info(result)
-    reply_msg = "{}, я добавил расход: {}; {}; {}; {}".format(query.from_user.first_name,
-                                                              amount,
-                                                              expense_name,
-                                                              category,
-                                                              date)
-
-    bot.sendMessage(chat_id=update.callback_query.message.chat_id, text=reply_msg)
-
-
-def error(bot, update, error):
-    logging.warning('Update "%s" caused error "%s"' % (update, error))
 
 
 def edit_expense_handler(bot, update):

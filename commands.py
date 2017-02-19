@@ -6,10 +6,10 @@ SEPARATOR = ';'
 Command = namedtuple('Command', 'name, max_operands, format, example')
 
 MONEY_COMMAND = Command(name='money', max_operands=3, format='/money сумма [; цель; дата]',
-                        example='/money 100; котята; 05.03')
+                        example='/money 100; котята; 02-23')
 
-
-# moneylist = Command(name='moneylist', max_operands=1, format='/moneylist [дата]', example='/money 100; котята; 05.03')
+MONEY_LIST_COMMAND = Command(name='moneylist', max_operands=1, format='/moneylist [дата]',
+                             example='/moneylist 02-23')
 
 
 def get_operands(command: Command, message: str) -> list:

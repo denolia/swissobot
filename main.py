@@ -8,7 +8,7 @@ from telegram.ext import Updater, CommandHandler, CallbackQueryHandler
 
 import commands
 from diary import diary
-from money_kbd_categories import money_handler, money_callback_handler, error, money_list_handler, edit_expense_handler
+from money import money_handler, money_callback_handler, money_list_handler, edit_expense_handler
 from task import task, task_list, done_task
 from weather import current_weather
 
@@ -55,6 +55,10 @@ def unknown(bot, update):
                        action=ChatAction.TYPING)
     bot.sendMessage(chat_id=update.message.chat_id,
                     text="Sorry, I didn't understand that command.")
+
+
+def error(bot, update, error):
+    logging.warning('Update "%s" caused error "%s"' % (update, error))
 
 
 updater = Updater(token='TOKEN')
