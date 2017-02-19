@@ -1,15 +1,16 @@
 import datetime
 import logging
+from math import ceil
 from threading import Lock
-from dateutil.parser import parse
 
+from dateutil.parser import parse
 from telegram import ChatAction
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
+import commands
 import goglemogle
 from goglemogle import get_categories
 from user_check import check_user_type, get_user_group
-from math import ceil
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
@@ -26,29 +27,54 @@ def money_handler(bot, update):
     if user_group != "d&j":
         return
 
-    bot.sendChatAction(chat_id=update.message.chat_id,
-                       action=ChatAction.TYPING)
+    bot.sendChatAction(chat_id=update.message.chat_id, action=ChatAction.TYPING)
+
+    if update.message.text is None:
+        handle_error(bot, update, 'No text provided')
+        return
+    try:
+        operands = commands.get_operands(commands.MONEY_COMMAND, update.message.text)
+    except Exception as e:
+        handle_error(bot, update, str(e))
+        raise e
+
+    amount = operands[0]
+    if amount is None:
+        handle_error(bot, update)
+        return
+
+    if operands[1] is not None:
+        expense_name = operands[1]
+    else:
+        expense_name = ""
+
+    if operands[2] is not None:
+        date = operands[2]
+    else:
+        date = str(update.message.date.date())
+
+    try:
+        parse(date).date()
+    except Exception as e:
+        handle_error(bot, update, str(e))
+        return
 
     with lock:
-        task_str = update.message.text.replace('/money', '').replace('@DnJTodoBot', '').strip().split(';')
-        if update.message.text is None:
-            bot.sendMessage(chat_id=update.message.chat_id, text="No text provided")
-            return
-
-        amount = task_str[0].strip()
-        if amount is "":
-            bot.sendMessage(chat_id=update.message.chat_id, text="Формат: /money сумма [; цель; дата]."
-                                                                 "\nПример: /money 100; котята; Подарки; 05.03")
-            return
-        expense_name = task_str[1].strip() if len(task_str) > 1 else ""
-        date = task_str[2].strip() if len(task_str) > 2 else str(update.message.date.date())
-
         global EXPENSE
-        EXPENSE.update({update.message.from_user.username: [amount, expense_name, date]})
+        EXPENSE[update.message.from_user.username] = [amount, expense_name, date]
 
     reply_markup = compose_categories_kbd(user_group)
 
     update.message.reply_text('Please choose category:', reply_markup=reply_markup)
+
+
+def handle_error(bot, update, custom_msg='', exception=None):
+    msg = '{custom_msg}\n{format}\n{example}'.format(custom_msg=custom_msg,
+                                                     format=commands.MONEY_COMMAND.format,
+                                                     example=commands.MONEY_COMMAND.example)
+    bot.sendMessage(chat_id=update.message.chat_id, text=msg)
+    if exception is not None:
+        logging.error(exception)
 
 
 def compose_categories_kbd(user_group):
@@ -149,7 +175,7 @@ def print_money_list(bot, update, values, date: datetime.date):
         logging.info(msg="no expenses for date {date}".format(date=date))
 
 
-def button(bot, update):
+def money_callback_handler(bot, update):
     query = update.callback_query
     user = query.from_user.username
     user_group = get_user_group(user)
