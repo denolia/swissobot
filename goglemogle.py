@@ -1,14 +1,17 @@
 import os
 import httplib2
+import logging
 
 from apiclient import discovery
 from oauth2client import client
 from oauth2client import tools
 from oauth2client.file import Storage
 
+# suppress warnings from googleapi about file_cache
+logging.getLogger('googleapiclient.discovery_cache').setLevel(logging.ERROR)
+
 try:
     import argparse
-
     flags = argparse.ArgumentParser(parents=[tools.argparser]).parse_args()
 except ImportError:
     flags = None
@@ -88,7 +91,6 @@ def add_task(user_group, task_name, due_date="", category="", link=""):
 
     task_id = get_id(user_group)
 
-
     newvalues = [
         ["", due_date, category, link, task_name, task_id + 1]
     ]
@@ -157,50 +159,6 @@ def get_categories(user_group):
     return [i[0] for i in result_read.get('values', [])]   # flattening
 
 
-def main():
-    """
-    Creates a Sheets API service object and prints the names and majors of
-    students in a sample spreadsheet:
-    https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit
-    """
-    service = get_spreadsheet_service()
-
-    newvalues = [
-        ["Item", "Cost", "Stocked", "Ship Date"],
-        ["Wheel", "$20.50", "4", "3/1/2016"],
-        ["Door", "$15", "2", "3/15/2016"],
-        ["Engine", "$100", "1", "30/20/2016"],
-        ["Totals", "=SUM(B2:B4)", "=SUM(C2:C4)", "=MAX(D2:D4)"]
-    ]
-
-    body = {
-        'values': newvalues
-    }
-
-    range_name = 'Sheet1!A1:D'
-    value_input_option = 'USER_ENTERED'
-    result_write = service.spreadsheets().values().append(
-        spreadsheetId=todo_spreadsheet_id, range=range_name,
-        valueInputOption=value_input_option, body=body).execute()
-    print(result_write)
-
-    result_read = service.spreadsheets().values().get(
-        spreadsheetId=todo_spreadsheet_id, range=range_name).execute()
-    values = result_read.get('values', [])
-
-    if not values:
-        print('No data found.')
-    else:
-        print('Here is the content of the table:')
-        for row in values:
-            # Print columns A and E, which correspond to indices 0 and 4.
-            print(row)
-
-
-if __name__ == '__main__':
-    main()
-
-
 def diary(text, date):
     service = get_spreadsheet_service()
     newvalues = [
@@ -237,7 +195,9 @@ def money(user_group, expense_name, amount, category, date):
     result_write = service.spreadsheets().values().append(
         spreadsheetId=money_spreadsheet_id.get(user_group), range=range_name,
         valueInputOption=value_input_option, body=body).execute()
-    return result_write
+    row = result_write.get("updates").get('updatedRange')
+    logging.info("Added an expense '{expense_name}' to the range '{row}'".format(expense_name=expense_name, row=row))
+    return row
 
 
 def money_list(user_group):

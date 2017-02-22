@@ -88,19 +88,26 @@ def money_callback_handler(bot, update):
 
     try:
         result = goglemogle.money(user_group, expense_name, amount, category, date)
+        upd_range = result.split('!')[-1]
     except Exception as e:
         logging.error(msg="A record was not added")
         bot.sendMessage(chat_id=update.message.chat_id, text="Sorry,\n" + str(e))
         raise e
 
-    logging.info(result)
-    reply_msg = "{}, я добавил расход: {}; {}; {}; {}".format(query.from_user.first_name,
-                                                              amount,
-                                                              expense_name,
-                                                              category,
-                                                              date)
+    logging.info("Changed range {}".format(upd_range))
+    reply_msg = "{name}, я добавил расход: " \
+                "{amount}; {expense_name}; {category}; {date}\n" \
+                "Updated range: {range}" \
+                "".format(name=query.from_user.first_name,
+                          amount=amount,
+                          expense_name=expense_name,
+                          category=category,
+                          date=date,
+                          range=upd_range)
 
-    bot.sendMessage(chat_id=update.callback_query.message.chat_id, text=reply_msg)
+    bot.editMessageText(chat_id=update.callback_query.message.chat_id,
+                        text=reply_msg,
+                        message_id=query.message.message_id)
 
 
 def handle_error(bot, update, custom_msg='', exception=None):
