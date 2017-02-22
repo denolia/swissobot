@@ -18,7 +18,7 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 help_text = """
 Доступные команды:
 {money_format}
-/moneylist [дата] - список расходов за дату с id
+{money_list_format} - список расходов за дату с id
 /moneyedit id; дата; категория; сумма; цель - изменить запись о расходе по id
 
 /diary запись
@@ -32,7 +32,9 @@ help_text = """
 /diary запись
 /task Погладить рубашку; Дела; 21.01; google.com
 """.format(money_format=commands.MONEY_COMMAND.format,
-           money_example=commands.MONEY_COMMAND.example)
+           money_list_format=commands.MONEY_LIST_COMMAND.format,
+           money_example=commands.MONEY_COMMAND.example
+           )
 
 
 def start(bot, update):
@@ -43,7 +45,6 @@ def start(bot, update):
 
 
 def bot_help(bot, update):
-
     bot.sendChatAction(chat_id=update.message.chat_id,
                        action=ChatAction.TYPING)
     bot.sendMessage(chat_id=update.message.chat_id,
@@ -75,7 +76,7 @@ updater.dispatcher.add_handler(CommandHandler('diary', diary))
 
 updater.dispatcher.add_handler(CommandHandler(commands.MONEY_COMMAND.name, money_handler))
 
-updater.dispatcher.add_handler(CommandHandler('moneylist', money_list_handler))
+updater.dispatcher.add_handler(CommandHandler(commands.MONEY_LIST_COMMAND.name, money_list_handler))
 
 updater.dispatcher.add_handler(CommandHandler('moneyedit', edit_expense_handler))
 
@@ -89,8 +90,6 @@ updater.dispatcher.add_error_handler(error)
 
 # Note: must be the last added to handler
 updater.dispatcher.add_handler(MessageHandler(Filters.command, unknown))
-
-updater.start_polling()  # поехали!
 
 # Start the Bot
 updater.start_polling()

@@ -7,7 +7,7 @@ from dateutil.parser import parse
 from telegram import ChatAction
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
-import commands
+from commands import get_operands, handle_error, MONEY_LIST_COMMAND, MONEY_COMMAND
 import goglemogle
 from goglemogle import get_categories
 from user_check import check_user_type, get_user_group
@@ -30,17 +30,17 @@ def money_handler(bot, update):
     bot.sendChatAction(chat_id=update.message.chat_id, action=ChatAction.TYPING)
 
     if update.message.text is None:
-        handle_error(bot, update, 'No text provided')
+        handle_error(bot, update, MONEY_COMMAND, 'No text provided')
         return
     try:
-        operands = commands.get_operands(commands.MONEY_COMMAND, update.message.text)
+        operands = get_operands(MONEY_COMMAND, update.message.text)
     except Exception as e:
-        handle_error(bot, update, str(e))
+        handle_error(bot, update, MONEY_COMMAND, str(e))
         raise e
 
     amount = operands[0]
     if amount is None:
-        handle_error(bot, update)
+        handle_error(bot, update, MONEY_COMMAND)
         return
 
     if operands[1] is not None:
@@ -56,7 +56,7 @@ def money_handler(bot, update):
     try:
         parse(date).date()
     except Exception as e:
-        handle_error(bot, update, str(e))
+        handle_error(bot, update, MONEY_COMMAND, str(e))
         return
 
     with lock:
@@ -110,15 +110,6 @@ def money_callback_handler(bot, update):
                         message_id=query.message.message_id)
 
 
-def handle_error(bot, update, custom_msg='', exception=None):
-    msg = '{custom_msg}\n{format}\n{example}'.format(custom_msg=custom_msg,
-                                                     format=commands.MONEY_COMMAND.format,
-                                                     example=commands.MONEY_COMMAND.example)
-    bot.sendMessage(chat_id=update.message.chat_id, text=msg)
-    if exception is not None:
-        logging.error(exception)
-
-
 def compose_categories_kbd(user_group):
     cat = CATEGORIES.get(user_group)
     if cat is None:
@@ -147,16 +138,24 @@ def money_list_handler(bot, update):
                        action=ChatAction.TYPING)
 
     if update.message.text is None:
-        bot.sendMessage(chat_id=update.message.chat_id, text="No text provided")
+        handle_error(bot, update, MONEY_LIST_COMMAND, 'No text provided')
         return
 
-    money_str = update.message.text.replace('/moneylist', '').replace('@DnJTodoBot', '').strip().split(';')
+    try:
+        operands = get_operands(MONEY_LIST_COMMAND, update.message.text)
+    except Exception as e:
+        handle_error(bot, update, MONEY_LIST_COMMAND, str(e))
+        raise e
 
-    date_str = money_str[0].strip()
-    if date_str is "":
+    date_str = operands[0]
+    if date_str is None:
         date = update.message.date.date()
     else:
-        date = parse(date_str).date()
+        try:
+            date = parse(date_str).date()
+        except Exception as e:
+            handle_error(bot, update, MONEY_LIST_COMMAND, str(e))
+            return
 
     try:
         values = goglemogle.money_list(user_group)
@@ -166,7 +165,7 @@ def money_list_handler(bot, update):
         raise e
 
     if not values:
-        logging.error(msg="empty response from google sheet")
+        logging.error(msg="Empty response from google sheet")
         bot.sendMessage(chat_id=update.message.chat_id,
                         text="Oops. I cannot find anything.")
     else:
@@ -177,10 +176,6 @@ def money_list_handler(bot, update):
             logging.error(e)
             bot.sendMessage(chat_id=update.message.chat_id, text="Sorry,\n" + str(e))
             raise e
-            # go to google spreadsheet
-            # obtain full list of expenses
-            # choose only those with the requested date
-            # send a message
 
 
 def print_money_list(bot, update, values, date: datetime.date):

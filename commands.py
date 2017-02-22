@@ -1,5 +1,7 @@
 from collections import namedtuple
 
+import logging
+
 BOT_NAME = '@DnJTodoBot'
 SEPARATOR = ';'
 
@@ -67,3 +69,12 @@ def get_operands(command: Command, message: str) -> list:
         result.append(None)
 
     return result
+
+
+def handle_error(bot, update, command: Command, custom_msg='', exception=None):
+    msg = '{custom_msg}\n{format}\n{example}'.format(custom_msg=custom_msg,
+                                                     format=command.format,
+                                                     example=command.example)
+    bot.sendMessage(chat_id=update.message.chat_id, text=msg)
+    if exception is not None:
+        logging.error(exception)
