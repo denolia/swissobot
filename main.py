@@ -9,7 +9,7 @@ from telegram.ext import Updater, CommandHandler, CallbackQueryHandler
 import commands
 from diary import diary
 from money import money_handler, money_callback_handler, money_list_handler, edit_expense_handler
-from task import task, task_list, done_task
+from task import task, task_list, done_task, task_delete_handler
 from weather import current_weather
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -24,6 +24,7 @@ help_text = """
 /diary запись
 /task Имя задачи [; категория; дата; ссылка]
 /tasklist - показать список всех актуальных задач
+{task_delete_format}
 /weather - показать погоду
 
 
@@ -33,7 +34,8 @@ help_text = """
 /task Погладить рубашку; Дела; 21.01; google.com
 """.format(money_format=commands.MONEY_COMMAND.format,
            money_list_format=commands.MONEY_LIST_COMMAND.format,
-           money_example=commands.MONEY_COMMAND.example
+           money_example=commands.MONEY_COMMAND.example,
+           task_delete_format=commands.TASK_DELETE_COMMAND.format
            )
 
 
@@ -69,6 +71,8 @@ updater.dispatcher.add_handler( CommandHandler('task', task)
 )
 
 updater.dispatcher.add_handler(CommandHandler('tasklist', task_list))
+
+updater.dispatcher.add_handler(CommandHandler(commands.TASK_DELETE_COMMAND.name, task_delete_handler))
 
 updater.dispatcher.add_handler(CommandHandler('done', done_task))
 

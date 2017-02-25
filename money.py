@@ -61,10 +61,10 @@ def money_handler(bot, update):
 
     with lock:
         global EXPENSE
+        # TODO a key shall be a message id, not a username
         EXPENSE[update.message.from_user.username] = [amount, expense_name, date]
 
     reply_markup = compose_categories_kbd(user_group)
-
     update.message.reply_text('Please choose category:', reply_markup=reply_markup)
 
 
@@ -82,16 +82,27 @@ def money_callback_handler(bot, update):
                         message_id=query.message.message_id)
 
     expense_data = EXPENSE.get(user)
-    amount = expense_data[0]
-    expense_name = expense_data[1]
-    date = expense_data[2]
+    if expense_data is not None:
+        amount = expense_data[0]
+        expense_name = expense_data[1]
+        date = expense_data[2]
+    else:
+        logging.error(msg="No records found for user {user}, current records: {map}"
+                          "".format(user=user, map=EXPENSE))
+        msg = "Wrong user has clicked on the keyboard, please repeat entering money record"
+        bot.editMessageText(chat_id=query.message.chat_id,
+                            text=msg,
+                            message_id=query.message.message_id)
+        return
 
     try:
         result = goglemogle.money(user_group, expense_name, amount, category, date)
         upd_range = result.split('!')[-1]
     except Exception as e:
         logging.error(msg="A record was not added")
-        bot.sendMessage(chat_id=update.message.chat_id, text="Sorry,\n" + str(e))
+        bot.editMessageText(chat_id=query.message.chat_id,
+                            text="Sorry,\n" + str(e),
+                            message_id=query.message.message_id)
         raise e
 
     logging.info("Changed range {}".format(upd_range))

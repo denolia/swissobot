@@ -13,6 +13,9 @@ MONEY_COMMAND = Command(name='money', max_operands=3, format='/money сумма 
 MONEY_LIST_COMMAND = Command(name='moneylist', max_operands=1, format='/moneylist [дата]',
                              example='/moneylist 02-23')
 
+TASK_DELETE_COMMAND = Command(name='taskdelete', max_operands=1, format='/taskdelete [id]',
+                             example='/taskdelete 76')
+
 
 def get_operands(command: Command, message: str) -> list:
     """Parses message string and retrieves command operands

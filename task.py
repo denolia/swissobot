@@ -4,13 +4,8 @@ from threading import Lock
 from telegram import ChatAction
 
 import goglemogle
+from commands import TASK_DELETE_COMMAND, handle_error, get_operands
 from user_check import check_user_type
-
-
-def add_category(bot, update):
-    # TODO implement
-    pass
-
 
 lock = Lock()
 
@@ -133,9 +128,9 @@ def done_task(bot, update):
             return
 
         # TODO check what if it is not int
-        task_id = int(task_str)
 
         try:
+            task_id = int(task_str)
             result = goglemogle.finish_task(user_group, task_id)
         except Exception as e:
             logging.error(e)
@@ -150,3 +145,41 @@ def done_task(bot, update):
             logging.info(result)
             reply_msg = update.message.from_user.first_name + ", я завершил задачу " + str(task_id)
             bot.sendMessage(chat_id=update.message.chat_id, text=reply_msg)
+
+
+def task_delete_handler(bot, update):
+    logging.info(msg="Deleting a task " + str(update.message))
+
+    user_group = check_user_type(bot, update)
+    if user_group is None or user_group == "":
+        return
+
+    bot.sendChatAction(chat_id=update.message.chat_id,
+                       action=ChatAction.TYPING)
+
+    if update.message.text is None:
+        handle_error(bot, update, TASK_DELETE_COMMAND, 'No text provided')
+        return
+    try:
+        operands = get_operands(TASK_DELETE_COMMAND, update.message.text)
+    except Exception as e:
+        handle_error(bot, update, TASK_DELETE_COMMAND, str(e))
+        raise e
+
+    with lock:
+        if operands[0] is not None:
+            task_id = operands[0]
+        else:
+            handle_error(bot, update, TASK_DELETE_COMMAND, "No task id provided")
+            return
+
+        try:
+            task_id = int(task_id)
+            result = goglemogle.delete_task(user_group, task_id)
+        except Exception as e:
+            handle_error(bot, update, TASK_DELETE_COMMAND, str(e))
+            raise e
+
+        logging.info(result)
+        reply_msg = update.message.from_user.first_name + ", я удалил задачу " + str(task_id)
+        bot.sendMessage(chat_id=update.message.chat_id, text=reply_msg)

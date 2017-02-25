@@ -1,8 +1,9 @@
-import os
-import httplib2
 import logging
+import os
 
+import httplib2
 from apiclient import discovery
+from googleapiclient.discovery import Resource
 from oauth2client import client
 from oauth2client import tools
 from oauth2client.file import Storage
@@ -12,6 +13,7 @@ logging.getLogger('googleapiclient.discovery_cache').setLevel(logging.ERROR)
 
 try:
     import argparse
+
     flags = argparse.ArgumentParser(parents=[tools.argparser]).parse_args()
 except ImportError:
     flags = None
@@ -64,7 +66,7 @@ def get_credentials():
     return credentials
 
 
-def get_spreadsheet_service():
+def get_spreadsheet_service() -> Resource:
     credentials = get_credentials()
     http = credentials.authorize(httplib2.Http())
     discoveryUrl = ('https://sheets.googleapis.com/$discovery/rest?'
@@ -114,7 +116,7 @@ def task_list(user_group):
     return result_read.get('values', [])
 
 
-def find_task_to_finish(tasks, task_id):
+def find_task_addr_by_id(tasks: list, task_id: int) -> [int, None]:
     for row in range(3, len(tasks)):
         if int(tasks[row][5]) == task_id:
             return row + 1
@@ -125,7 +127,7 @@ def finish_task(user_group, task_id):
     service = get_spreadsheet_service()
 
     tasks = task_list(user_group)
-    row_address = find_task_to_finish(tasks, task_id)
+    row_address = find_task_addr_by_id(tasks, task_id)
 
     if row_address is None:
         raise ValueError("Task is not found")
@@ -149,6 +151,36 @@ def finish_task(user_group, task_id):
     return result_write
 
 
+def delete_task(user_group, task_id):
+    service = get_spreadsheet_service()
+
+    tasks = task_list(user_group)
+    row_address = find_task_addr_by_id(tasks, task_id)
+
+    if row_address is None:
+        raise ValueError("Task is not found")
+
+    body = {
+        "requests": [
+            {
+                "deleteDimension": {
+                    "range": {
+                        "startIndex": row_address - 1,
+                        "endIndex": row_address,
+                        "dimension": "ROWS",
+                        "sheetId": 1386834576
+                    }
+                }
+            }
+        ]
+    }
+
+    result_write = service.spreadsheets().batchUpdate(
+        spreadsheetId=todo_spreadsheet_id.get(user_group),
+        body=body).execute()
+    return result_write
+
+
 def get_categories(user_group):
     service = get_spreadsheet_service()
     range_name = 'categories!A:A'
@@ -156,7 +188,7 @@ def get_categories(user_group):
     result_read = service.spreadsheets().values().get(
         spreadsheetId=money_spreadsheet_id.get(user_group), range=range_name).execute()
 
-    return [i[0] for i in result_read.get('values', [])]   # flattening
+    return [i[0] for i in result_read.get('values', [])]  # flattening
 
 
 def diary(text, date):
@@ -228,4 +260,36 @@ def edit_expense(user_group, row_address, date, category, value, aim):
         spreadsheetId=money_spreadsheet_id.get(user_group), range=range_name,
         valueInputOption=value_input_option, body=body).execute()
     return result_write
+
+
+def get_sheet_id_by_title(user_group: str, title: str) -> int:
+
+    """ Retrieves sheet id by title of a sheet
+
+    >>> get_sheet_id_by_title('d&j', 'TODO')
+    1386834576
+    >>> get_sheet_id_by_title('d&j', 'sjdhff')
+
+    """
+
+    service = get_spreadsheet_service()
+
+    result_write = service.spreadsheets().get(
+        spreadsheetId=todo_spreadsheet_id.get(user_group)).execute()
+
+    for sheet in result_write.get('sheets'):
+        if sheet.get('properties').get('title') == title:
+            return int(sheet.get('properties').get('sheetId'))
+
+# if __name__ == '__main__':
+#     # money_list('d&j')
+#     # a = delete_row('d&j', 'TODO!A75:E75')
+#     # print(a)
+#
+#     service = get_spreadsheet_service()
+#
+#     a = get_sheet_id_by_title('d&j', 'TODO')
+#
+#     print(a)
+
 
