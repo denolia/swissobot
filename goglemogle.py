@@ -262,14 +262,16 @@ def edit_expense(user_group, row_address, date, category, value, aim):
     return result_write
 
 
-def get_sheet_id_by_title(user_group: str, title: str) -> int:
-
+def get_sheet_id_by_title(user_group: str, title: str) -> [int, None]:
     """ Retrieves sheet id by title of a sheet
 
+    for a correct we obtain an id:
     >>> get_sheet_id_by_title('d&j', 'TODO')
     1386834576
-    >>> get_sheet_id_by_title('d&j', 'sjdhff')
 
+    For incorrect we obtain None:
+    >>> get_sheet_id_by_title('d&j', 'sjdhff')
+    None
     """
 
     service = get_spreadsheet_service()
@@ -280,6 +282,8 @@ def get_sheet_id_by_title(user_group: str, title: str) -> int:
     for sheet in result_write.get('sheets'):
         if sheet.get('properties').get('title') == title:
             return int(sheet.get('properties').get('sheetId'))
+    return None
+
 
 # if __name__ == '__main__':
 #     # money_list('d&j')

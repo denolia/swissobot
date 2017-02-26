@@ -6,9 +6,9 @@ from telegram.ext import Filters
 from telegram.ext import MessageHandler
 from telegram.ext import Updater, CommandHandler, CallbackQueryHandler
 
-import commands
+from commands import MONEY_COMMAND, MONEY_EDIT_COMMAND, TASK_DELETE_COMMAND, MONEY_LIST_COMMAND
 from diary import diary
-from money import money_handler, money_callback_handler, money_list_handler, edit_expense_handler
+from money import money_handler, money_callback_handler, money_list_handler, money_edit_handler
 from task import task, task_list, done_task, task_delete_handler
 from weather import current_weather
 
@@ -19,7 +19,7 @@ help_text = """
 Доступные команды:
 {money_format}
 {money_list_format} - список расходов за дату с id
-/moneyedit id; дата; категория; сумма; цель - изменить запись о расходе по id
+{money_edit_format} - изменить запись о расходе по id
 
 /diary запись
 /task Имя задачи [; категория; дата; ссылка]
@@ -31,11 +31,12 @@ help_text = """
 Примеры:
 {money_example}
 /diary запись
-/task Погладить рубашку; Дела; 21.01; google.com
-""".format(money_format=commands.MONEY_COMMAND.format,
-           money_list_format=commands.MONEY_LIST_COMMAND.format,
-           money_example=commands.MONEY_COMMAND.example,
-           task_delete_format=commands.TASK_DELETE_COMMAND.format
+/task Погладить котика; Дела; 21.01; google.com
+""".format(money_format=MONEY_COMMAND.format,
+           money_list_format=MONEY_LIST_COMMAND.format,
+           money_example=MONEY_COMMAND.example,
+           task_delete_format=TASK_DELETE_COMMAND.format,
+           money_edit_format=MONEY_EDIT_COMMAND.format
            )
 
 
@@ -72,17 +73,17 @@ updater.dispatcher.add_handler( CommandHandler('task', task)
 
 updater.dispatcher.add_handler(CommandHandler('tasklist', task_list))
 
-updater.dispatcher.add_handler(CommandHandler(commands.TASK_DELETE_COMMAND.name, task_delete_handler))
+updater.dispatcher.add_handler(CommandHandler(TASK_DELETE_COMMAND.name, task_delete_handler))
 
 updater.dispatcher.add_handler(CommandHandler('done', done_task))
 
 updater.dispatcher.add_handler(CommandHandler('diary', diary))
 
-updater.dispatcher.add_handler(CommandHandler(commands.MONEY_COMMAND.name, money_handler))
+updater.dispatcher.add_handler(CommandHandler(MONEY_COMMAND.name, money_handler))
 
-updater.dispatcher.add_handler(CommandHandler(commands.MONEY_LIST_COMMAND.name, money_list_handler))
+updater.dispatcher.add_handler(CommandHandler(MONEY_LIST_COMMAND.name, money_list_handler))
 
-updater.dispatcher.add_handler(CommandHandler('moneyedit', edit_expense_handler))
+updater.dispatcher.add_handler(CommandHandler(MONEY_EDIT_COMMAND.name, money_edit_handler))
 
 updater.dispatcher.add_handler(CallbackQueryHandler(money_callback_handler))
 

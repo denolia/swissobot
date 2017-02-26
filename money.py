@@ -7,7 +7,7 @@ from dateutil.parser import parse
 from telegram import ChatAction
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
-from commands import get_operands, handle_error, MONEY_LIST_COMMAND, MONEY_COMMAND
+from commands import get_operands, handle_error, MONEY_LIST_COMMAND, MONEY_COMMAND, MONEY_EDIT_COMMAND
 import goglemogle
 from goglemogle import get_categories
 from user_check import check_user_type, get_user_group
@@ -201,11 +201,8 @@ def print_money_list(bot, update, values, date: datetime.date):
         if expense_date == date:
             row_found_flag = True
             expense_number += 1
-            money_str += "[{row}] {date}; {cat}; {value}; {aim}\n".format(row=row_address,
-                                                                          date=row[0],
-                                                                          cat=row[1],
-                                                                          value=row[2],
-                                                                          aim=row[3])
+            money_str += "[{row}] {date}; {cat}; {value}; {aim}\n" \
+                         "".format(row=row_address, date=row[0], cat=row[1], value=row[2], aim=row[3])
             # print by chunks of 10 tasks
             if expense_number >= 10:
                 bot.sendMessage(chat_id=update.message.chat_id, text=money_str)
@@ -219,54 +216,56 @@ def print_money_list(bot, update, values, date: datetime.date):
         logging.info(msg="list of expenses " + money_str)
 
     if not row_found_flag:
-        bot.sendMessage(chat_id=update.message.chat_id, text="Nothing was found for date: {date}".format(date=date))
+        bot.sendMessage(chat_id=update.message.chat_id,
+                        text="Nothing was found for date: {date}".format(date=date))
         logging.info(msg="no expenses for date {date}".format(date=date))
 
 
-def edit_expense_handler(bot, update):
-    logging.info(msg="Editing a task " + str(update.message))
+def money_edit_handler(bot, update):
+    logging.info(msg="Editing a money record " + str(update.message))
 
     user_group = check_user_type(bot, update)
-    if user_group is None or user_group == "":
+    if user_group != "d&j":
         return
 
     if update.message.text is None:
+        handle_error(bot, update, MONEY_EDIT_COMMAND, 'No text provided')
         return
 
     bot.sendChatAction(chat_id=update.message.chat_id,
                        action=ChatAction.TYPING)
-    with lock:
-        money_str = update.message.text \
-            .replace('/moneyedit', '') \
-            .replace('@DnJTodoBot', '') \
-            .strip() \
-            .split(";")
-        if money_str == '':
-            logging.info("String with expense is empty" + str(update.message.text))
-            bot.sendMessage(chat_id=update.message.chat_id,
-                            text="Формат: /moneyedit id;  дата; категория; сумма; цель ")
-            return
 
-        row_address = money_str[0].strip()
-        expense_date = money_str[1].strip() if len(money_str) > 1 else None
-        category = money_str[2].strip() if len(money_str) > 2 else None
-        value = money_str[3].strip() if len(money_str) > 3 else None
-        aim = money_str[4].strip() if len(money_str) > 4 else None
+    try:
+        operands = get_operands(MONEY_EDIT_COMMAND, update.message.text)
+    except Exception as e:
+        handle_error(bot, update, MONEY_EDIT_COMMAND, str(e))
+        raise e
 
-        if not (row_address and expense_date and category and value and aim):
-            logging.info("Wrong format " + str(update.message.text))
-            bot.sendMessage(chat_id=update.message.chat_id,
-                            text="Формат: /moneyedit id;  дата; категория; сумма; цель ")
-            return
+    row_address = operands[0]
+    if row_address is None:
+        handle_error(bot, update, MONEY_EDIT_COMMAND, "No id provided")
+        return
 
-        try:
+    expense_date = operands[1]
+    category = operands[2]
+    value = operands[3]
+    aim = operands[4]
+
+    if not (row_address and expense_date and category and value and aim):
+        handle_error(bot, update, MONEY_EDIT_COMMAND, "All parameters have to be defined")
+        return
+
+    try:
+        parse(expense_date).date()
+        int(row_address)
+        float(value)
+        with lock:
             result = goglemogle.edit_expense(user_group, row_address, expense_date, category, value, aim)
-        except Exception as e:
-            logging.error(e)
-            bot.sendMessage(chat_id=update.message.chat_id, text="Sorry,\n" + str(e))
-            raise e
+    except Exception as e:
+        handle_error(bot, update, MONEY_EDIT_COMMAND, "An error occurred: ", e)
+        raise e
 
-        logging.info(result)
-        reply_msg = "{name}, я отредактировал расход {row}".format(name=update.message.from_user.first_name,
-                                                                   row=row_address)
-        bot.sendMessage(chat_id=update.message.chat_id, text=reply_msg)
+    logging.info(result)
+    reply_msg = "{name}, я отредактировал расход {row}".format(name=update.message.from_user.first_name,
+                                                               row=row_address)
+    bot.sendMessage(chat_id=update.message.chat_id, text=reply_msg)
