@@ -31,9 +31,6 @@ def money_handler(bot, update):
 
     bot.sendChatAction(chat_id=update.message.chat_id, action=ChatAction.TYPING)
 
-    if update.message.text is None:
-        handle_error(bot, update, MONEY_COMMAND, 'No text provided')
-        return
     try:
         operands = get_operands(MONEY_COMMAND, update.message.text)
     except Exception as e:

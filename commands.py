@@ -20,6 +20,9 @@ TASK_DELETE_COMMAND = Command(name='taskdelete', max_operands=1, format='/taskde
 MONEY_EDIT_COMMAND = Command(name='moneyedit', max_operands=5, format='/moneyedit id[; дата; категория; сумма; цель]',
                         example='/moneyedit 100; 02-23; Подарки; 200; котята')
 
+DIARY_COMMAND = Command(name='diary', max_operands=1, format='/diary text',
+                        example='/diary what a great day today!')
+
 
 def get_operands(command: Command, message: str) -> list:
     """Parses message string and retrieves command operands

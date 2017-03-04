@@ -7,8 +7,8 @@ from telegram.ext import Filters
 from telegram.ext import MessageHandler
 from telegram.ext import Updater, CommandHandler, CallbackQueryHandler
 
-from commands import MONEY_COMMAND, MONEY_EDIT_COMMAND, TASK_DELETE_COMMAND, MONEY_LIST_COMMAND
-from diary import diary
+from commands import MONEY_COMMAND, MONEY_EDIT_COMMAND, TASK_DELETE_COMMAND, MONEY_LIST_COMMAND, DIARY_COMMAND
+from diary import diary_handler
 from money import money_handler, money_callback_handler, money_list_handler, money_edit_handler
 from task import task, task_list, done_task, task_delete_handler
 from weather import current_weather
@@ -22,7 +22,7 @@ help_text = """
 {money_list_format} - список расходов за дату с id
 {money_edit_format} - изменить запись о расходе по id
 
-/diary запись
+{diary_format} запись
 /task Имя задачи [; категория; дата; ссылка]
 /tasklist - показать список всех актуальных задач
 {task_delete_format}
@@ -31,13 +31,15 @@ help_text = """
 
 Примеры:
 {money_example}
-/diary запись
+{diary_example}
 /task Погладить котика; Дела; 21.01; google.com
 """.format(money_format=MONEY_COMMAND.format,
            money_list_format=MONEY_LIST_COMMAND.format,
            money_example=MONEY_COMMAND.example,
            task_delete_format=TASK_DELETE_COMMAND.format,
-           money_edit_format=MONEY_EDIT_COMMAND.format
+           money_edit_format=MONEY_EDIT_COMMAND.format,
+           diary_format=DIARY_COMMAND.format,
+           diary_example=DIARY_COMMAND.example
            )
 
 
@@ -78,7 +80,7 @@ updater.dispatcher.add_handler(CommandHandler(TASK_DELETE_COMMAND.name, task_del
 
 updater.dispatcher.add_handler(CommandHandler('done', done_task))
 
-updater.dispatcher.add_handler(CommandHandler('diary', diary))
+updater.dispatcher.add_handler(CommandHandler(DIARY_COMMAND.name, diary_handler))
 
 updater.dispatcher.add_handler(CommandHandler(MONEY_COMMAND.name, money_handler))
 
