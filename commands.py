@@ -1,6 +1,7 @@
-from collections import namedtuple
+# coding=utf-8
 
 import logging
+from collections import namedtuple
 
 BOT_NAME = '@DnJTodoBot'
 SEPARATOR = ';'
@@ -84,3 +85,9 @@ def handle_error(bot, update, command: Command, custom_msg='', exception=None):
     bot.sendMessage(chat_id=update.message.chat_id, text=msg)
     if exception is not None:
         logging.error(exception)
+
+
+if __name__ == "__main__":
+    import doctest
+
+    doctest.testmod()

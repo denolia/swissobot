@@ -1,3 +1,5 @@
+# coding=utf-8
+
 import logging
 
 allowed_users = ('daniilbubnov', 'julia_vikulina')
@@ -28,3 +30,9 @@ def get_user_group(user) -> str:
         if user in user_group.get(group):
             return group
     return ""
+
+
+if __name__ == "__main__":
+    import doctest
+
+    doctest.testmod()

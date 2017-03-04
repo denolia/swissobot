@@ -1,3 +1,5 @@
+# coding=utf-8
+
 import datetime
 import logging
 from math import ceil
@@ -7,8 +9,8 @@ from dateutil.parser import parse
 from telegram import ChatAction
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
-from commands import get_operands, handle_error, MONEY_LIST_COMMAND, MONEY_COMMAND, MONEY_EDIT_COMMAND
 import goglemogle
+from commands import get_operands, handle_error, MONEY_LIST_COMMAND, MONEY_COMMAND, MONEY_EDIT_COMMAND
 from goglemogle import get_categories
 from user_check import check_user_type, get_user_group
 
@@ -269,3 +271,9 @@ def money_edit_handler(bot, update):
     reply_msg = "{name}, я отредактировал расход {row}".format(name=update.message.from_user.first_name,
                                                                row=row_address)
     bot.sendMessage(chat_id=update.message.chat_id, text=reply_msg)
+
+
+if __name__ == "__main__":
+    import doctest
+
+    doctest.testmod()
