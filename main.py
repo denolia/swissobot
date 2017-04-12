@@ -1,20 +1,19 @@
 # coding=utf-8
 
-import logging
-
+import yaml
 from telegram import ChatAction
 from telegram.ext import Filters
 from telegram.ext import MessageHandler
 from telegram.ext import Updater, CommandHandler, CallbackQueryHandler
 
-from commands import MONEY_COMMAND, MONEY_EDIT_COMMAND, TASK_DELETE_COMMAND, MONEY_LIST_COMMAND, DIARY_COMMAND
-from diary import diary_handler
-from money import money_handler, money_callback_handler, money_list_handler, money_edit_handler
-from task import task, task_list, done_task, task_delete_handler
-from weather import current_weather
+from config import log_conf
+from core.diary import diary_handler
+from core.money import money_handler, money_callback_handler, money_list_handler, money_edit_handler
+from core.task import task, task_list, done_task, task_delete_handler
+from core.weather import current_weather
+from utils.commands import MONEY_COMMAND, MONEY_EDIT_COMMAND, TASK_DELETE_COMMAND, MONEY_LIST_COMMAND, DIARY_COMMAND
 
-logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                    level=logging.INFO)
+log = log_conf.get_logger(__name__)
 
 help_text = """
 Доступные команды:
@@ -65,43 +64,39 @@ def unknown(bot, update):
 
 
 def error(bot, update, error):
-    logging.warning('Update "%s" caused error "%s"' % (update, error))
+    log.warning('Update "%s" caused error "%s"' % (update, error))
 
 
-updater = Updater(token='TOKEN')
+if __name__ == '__main__':
+    log.info("Starting swissobot...")
+    with open("config/config.yaml", 'r') as stream:
+        config = yaml.load(stream)
+    log.info("Reading token...")
+    TOKEN = config.get('token')
+    updater = Updater(token=TOKEN)
 
-updater.dispatcher.add_handler( CommandHandler('start', start))
-updater.dispatcher.add_handler( CommandHandler('task', task)
-)
+    log.info("Adding handlers...")
+    updater.dispatcher.add_handler(CommandHandler('start', start))
+    updater.dispatcher.add_handler(CommandHandler('task', task))
+    updater.dispatcher.add_handler(CommandHandler('tasklist', task_list))
+    updater.dispatcher.add_handler(CommandHandler(TASK_DELETE_COMMAND.name, task_delete_handler))
+    updater.dispatcher.add_handler(CommandHandler('done', done_task))
+    updater.dispatcher.add_handler(CommandHandler(DIARY_COMMAND.name, diary_handler))
+    updater.dispatcher.add_handler(CommandHandler(MONEY_COMMAND.name, money_handler))
+    updater.dispatcher.add_handler(CommandHandler(MONEY_LIST_COMMAND.name, money_list_handler))
+    updater.dispatcher.add_handler(CommandHandler(MONEY_EDIT_COMMAND.name, money_edit_handler))
+    updater.dispatcher.add_handler(CallbackQueryHandler(money_callback_handler))
+    updater.dispatcher.add_handler(CommandHandler('weather', current_weather))
+    updater.dispatcher.add_handler(CommandHandler('help', bot_help))
+    updater.dispatcher.add_error_handler(error)
 
-updater.dispatcher.add_handler(CommandHandler('tasklist', task_list))
+    # Note: must be the last added to handler
+    updater.dispatcher.add_handler(MessageHandler(Filters.command, unknown))
 
-updater.dispatcher.add_handler(CommandHandler(TASK_DELETE_COMMAND.name, task_delete_handler))
+    # Start the Bot
+    updater.start_polling()
+    log.info("Listening...")
 
-updater.dispatcher.add_handler(CommandHandler('done', done_task))
-
-updater.dispatcher.add_handler(CommandHandler(DIARY_COMMAND.name, diary_handler))
-
-updater.dispatcher.add_handler(CommandHandler(MONEY_COMMAND.name, money_handler))
-
-updater.dispatcher.add_handler(CommandHandler(MONEY_LIST_COMMAND.name, money_list_handler))
-
-updater.dispatcher.add_handler(CommandHandler(MONEY_EDIT_COMMAND.name, money_edit_handler))
-
-updater.dispatcher.add_handler(CallbackQueryHandler(money_callback_handler))
-
-updater.dispatcher.add_handler(CommandHandler('weather', current_weather))
-
-updater.dispatcher.add_handler(CommandHandler('help', bot_help))
-
-updater.dispatcher.add_error_handler(error)
-
-# Note: must be the last added to handler
-updater.dispatcher.add_handler(MessageHandler(Filters.command, unknown))
-
-# Start the Bot
-updater.start_polling()
-
-# Run the bot until the user presses Ctrl-C or the process receives SIGINT,
-# SIGTERM or SIGABRT
-updater.idle()
+    # Run the bot until the user presses Ctrl-C or the process receives SIGINT,
+    # SIGTERM or SIGABRT
+    updater.idle()

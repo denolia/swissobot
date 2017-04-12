@@ -5,15 +5,17 @@ from threading import Lock
 
 from telegram import ChatAction
 
-import goglemogle
-from commands import TASK_DELETE_COMMAND, handle_error, get_operands
-from user_check import check_user_type
+from googlesheets import goglemogle
+from utils.commands import TASK_DELETE_COMMAND, handle_error, get_operands
+from utils.user_check import check_user_type
 
 lock = Lock()
 
+log = logging.getLogger(__name__)
+
 
 def task(bot, update):
-    logging.info(msg="Adding a task " + str(update.message))
+    log.info(msg="Adding a task " + str(update.message))
 
     user_group = check_user_type(bot, update)
     if user_group is None or user_group == "":
@@ -31,7 +33,7 @@ def task(bot, update):
             .strip() \
             .split(";")
         if task_str[0] == '':
-            logging.info("Input task is empty" + str(update.message.text))
+            log.info("Input task is empty" + str(update.message.text))
             bot.sendMessage(chat_id=update.message.chat_id, text="Формат: /task Имя задачи [; категория; дата; ссылка]")
             return
 
@@ -43,17 +45,17 @@ def task(bot, update):
         try:
             result = goglemogle.add_task(user_group, task_name, due_date, category, link)
         except Exception as e:
-            logging.error(e)
+            log.error(e)
             bot.sendMessage(chat_id=update.message.chat_id, text="Sorry,\n" + str(e))
             raise e
 
-        logging.info(result)
+        log.info(result)
         reply_msg = update.message.from_user.first_name + ", я добавил задачу: " + task_name
         bot.sendMessage(chat_id=update.message.chat_id, text=reply_msg)
 
 
 def task_list(bot, update):
-    logging.info(msg="Listing tasks ")
+    log.info(msg="Listing tasks ")
 
     user_group = check_user_type(bot, update)
     if user_group != "d&j":
@@ -66,12 +68,12 @@ def task_list(bot, update):
     try:
         values = goglemogle.task_list(user_group)
     except Exception as e:
-        logging.error(e)
+        log.error(e)
         bot.sendMessage(chat_id=update.message.chat_id, text="Sorry,\n" + str(e))
         raise e
 
     if not values:
-        logging.error(msg="empty response from google sheet")
+        log.error(msg="empty response from google sheet")
         bot.sendMessage(chat_id=update.message.chat_id,
                         text="Oops. I cannot find anything. \nHave you finished everything? Amazing!")
     else:
@@ -79,7 +81,7 @@ def task_list(bot, update):
             print_task_list(bot, update, values)
 
         except Exception as e:
-            logging.error(e)
+            log.error(e)
             bot.sendMessage(chat_id=update.message.chat_id, text="Sorry,\n" + str(e))
             raise e
 
@@ -97,18 +99,18 @@ def print_task_list(bot, update, values):
             # print by chunks of 10 tasks
             if task_number >= 10:
                 bot.sendMessage(chat_id=update.message.chat_id, text=todo_str)
-                logging.info(msg="list of tasks " + todo_str)
+                log.info(msg="list of tasks " + todo_str)
                 task_number = 0
                 todo_str = ""
 
     # print the rest part
     if todo_str != "":
         bot.sendMessage(chat_id=update.message.chat_id, text=todo_str)
-        logging.info(msg="list of tasks " + todo_str)
+        log.info(msg="list of tasks " + todo_str)
 
 
 def done_task(bot, update):
-    logging.info(msg="Finishing a task " + str(update.message))
+    log.info(msg="Finishing a task " + str(update.message))
 
     user_group = check_user_type(bot, update)
     if user_group is None or user_group == "":
@@ -125,7 +127,7 @@ def done_task(bot, update):
             .replace('@DnJTodoBot', '') \
             .strip()
         if task_str == '':
-            logging.info("String with task id is empty" + str(update.message.text))
+            log.info("String with task id is empty" + str(update.message.text))
             bot.sendMessage(chat_id=update.message.chat_id, text="Формат: /done id")
             return
 
@@ -135,22 +137,22 @@ def done_task(bot, update):
             task_id = int(task_str)
             result = goglemogle.finish_task(user_group, task_id)
         except Exception as e:
-            logging.error(e)
+            log.error(e)
             bot.sendMessage(chat_id=update.message.chat_id, text="Sorry,\n" + str(e))
             raise e
 
         if result is False:
-            logging.info(result)
+            log.info(result)
             reply_msg = update.message.from_user.first_name + ", эта задача уже была завершена"
             bot.sendMessage(chat_id=update.message.chat_id, text=reply_msg)
         else:
-            logging.info(result)
+            log.info(result)
             reply_msg = update.message.from_user.first_name + ", я завершил задачу " + str(task_id)
             bot.sendMessage(chat_id=update.message.chat_id, text=reply_msg)
 
 
 def task_delete_handler(bot, update):
-    logging.info(msg="Deleting a task " + str(update.message))
+    log.info(msg="Deleting a task " + str(update.message))
 
     user_group = check_user_type(bot, update)
     if user_group is None or user_group == "":
@@ -182,6 +184,6 @@ def task_delete_handler(bot, update):
             handle_error(bot, update, TASK_DELETE_COMMAND, str(e))
             raise e
 
-        logging.info(result)
+        log.info(result)
         reply_msg = update.message.from_user.first_name + ", я удалил задачу " + str(task_id)
         bot.sendMessage(chat_id=update.message.chat_id, text=reply_msg)

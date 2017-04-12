@@ -5,11 +5,13 @@ from threading import Lock
 
 from telegram import ChatAction
 
-import goglemogle
-from commands import get_operands, DIARY_COMMAND, handle_error
-from user_check import check_user_type
+from googlesheets import goglemogle
+from utils.commands import get_operands, DIARY_COMMAND, handle_error
+from utils.user_check import check_user_type
 
 lock = Lock()
+
+log = logging.getLogger(__name__)
 
 
 def diary_handler(bot, update):
@@ -20,7 +22,7 @@ def diary_handler(bot, update):
     if user_group != "d&j":
         return
 
-    logging.info(msg="Adding a diary record: " + str(update.message))
+    log.info(msg="Adding a diary record: " + str(update.message))
 
     try:
         operands = get_operands(DIARY_COMMAND, update.message.text)

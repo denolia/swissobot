@@ -9,13 +9,12 @@ from dateutil.parser import parse
 from telegram import ChatAction
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
-import goglemogle
-from commands import get_operands, handle_error, MONEY_LIST_COMMAND, MONEY_COMMAND, MONEY_EDIT_COMMAND
-from goglemogle import get_categories
-from user_check import check_user_type, get_user_group
+from googlesheets import goglemogle
+from googlesheets.goglemogle import get_categories
+from utils.commands import get_operands, handle_error, MONEY_LIST_COMMAND, MONEY_COMMAND, MONEY_EDIT_COMMAND
+from utils.user_check import check_user_type, get_user_group
 
-logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                    level=logging.INFO)
+log = logging.getLogger(__name__)
 
 CATEGORIES = {}
 lock = Lock()
@@ -24,7 +23,7 @@ EXPENSE = {}
 
 
 def money_handler(bot, update):
-    logging.info(msg="Adding a money record: " + str(update.message.text))
+    log.info(msg="Adding a money record: " + str(update.message.text))
     user_group = check_user_type(bot, update)
     if user_group != "d&j":
         return
@@ -71,7 +70,7 @@ def money_callback_handler(bot, update):
     query = update.callback_query
     user = query.from_user.username
     user_group = get_user_group(user)
-    if user_group == "":
+    if user_group is None:
         return
 
     category = CATEGORIES.get(user_group)[int(query.data)]
@@ -86,7 +85,7 @@ def money_callback_handler(bot, update):
         expense_name = expense_data[1]
         date = expense_data[2]
     else:
-        logging.error(msg="No records found for user {user}, current records: {map}"
+        log.error(msg="No records found for user {user}, current records: {map}"
                           "".format(user=user, map=EXPENSE))
         msg = "Wrong user has clicked on the keyboard, please repeat entering money record"
         bot.editMessageText(chat_id=query.message.chat_id,
@@ -98,13 +97,13 @@ def money_callback_handler(bot, update):
         result = goglemogle.money(user_group, expense_name, amount, category, date)
         upd_range = result.split('!')[-1]
     except Exception as e:
-        logging.error(msg="A record was not added")
+        log.error(msg="A record was not added")
         bot.editMessageText(chat_id=query.message.chat_id,
                             text="Sorry,\n" + str(e),
                             message_id=query.message.message_id)
         raise e
 
-    logging.info("Changed range {}".format(upd_range))
+    log.info("Changed range {}".format(upd_range))
     reply_msg = "{name}, я добавил расход: " \
                 "{amount}; {expense_name}; {category}; {date}\n" \
                 "Updated range: {range}" \
@@ -139,7 +138,7 @@ def compose_categories_kbd(user_group):
 
 
 def money_list_handler(bot, update):
-    logging.info(msg="Getting list of expenses for a date: " + str(update.message.text))
+    log.info(msg="Getting list of expenses for a date: " + str(update.message.text))
     user_group = check_user_type(bot, update)
     if user_group != "d&j":
         return
@@ -170,12 +169,12 @@ def money_list_handler(bot, update):
     try:
         values = goglemogle.money_list(user_group)
     except Exception as e:
-        logging.error(e)
+        log.error(e)
         bot.sendMessage(chat_id=update.message.chat_id, text="Sorry,\n" + str(e))
         raise e
 
     if not values:
-        logging.error(msg="Empty response from google sheet")
+        log.error(msg="Empty response from google sheet")
         bot.sendMessage(chat_id=update.message.chat_id,
                         text="Oops. I cannot find anything.")
     else:
@@ -183,7 +182,7 @@ def money_list_handler(bot, update):
             print_money_list(bot, update, values, date)
 
         except Exception as e:
-            logging.error(e)
+            log.error(e)
             bot.sendMessage(chat_id=update.message.chat_id, text="Sorry,\n" + str(e))
             raise e
 
@@ -205,23 +204,23 @@ def print_money_list(bot, update, values, date: datetime.date):
             # print by chunks of 10 tasks
             if expense_number >= 10:
                 bot.sendMessage(chat_id=update.message.chat_id, text=money_str)
-                logging.info(msg="list of expenses " + money_str)
+                log.info(msg="list of expenses " + money_str)
                 expense_number = 0
                 money_str = ""
 
     # print the rest part
     if money_str != "":
         bot.sendMessage(chat_id=update.message.chat_id, text=money_str)
-        logging.info(msg="list of expenses " + money_str)
+        log.info(msg="list of expenses " + money_str)
 
     if not row_found_flag:
         bot.sendMessage(chat_id=update.message.chat_id,
                         text="Nothing was found for date: {date}".format(date=date))
-        logging.info(msg="no expenses for date {date}".format(date=date))
+        log.info(msg="no expenses for date {date}".format(date=date))
 
 
 def money_edit_handler(bot, update):
-    logging.info(msg="Editing a money record " + str(update.message))
+    log.info(msg="Editing a money record " + str(update.message))
 
     user_group = check_user_type(bot, update)
     if user_group != "d&j":
@@ -264,7 +263,7 @@ def money_edit_handler(bot, update):
         handle_error(bot, update, MONEY_EDIT_COMMAND, "An error occurred: ", e)
         raise e
 
-    logging.info(result)
+    log.info(result)
     reply_msg = "{name}, я отредактировал расход {row}".format(name=update.message.from_user.first_name,
                                                                row=row_address)
     bot.sendMessage(chat_id=update.message.chat_id, text=reply_msg)

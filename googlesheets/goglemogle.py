@@ -10,8 +10,8 @@ from oauth2client import client
 from oauth2client import tools
 from oauth2client.file import Storage
 
-# suppress warnings from googleapi about file_cache
-logging.getLogger('googleapiclient.discovery_cache').setLevel(logging.ERROR)
+log = logging.getLogger(__name__)
+
 
 try:
     import argparse
@@ -230,7 +230,7 @@ def money(user_group, expense_name, amount, category, date):
         spreadsheetId=money_spreadsheet_id.get(user_group), range=range_name,
         valueInputOption=value_input_option, body=body).execute()
     row = result_write.get("updates").get('updatedRange')
-    logging.info("Added an expense '{expense_name}' to the range '{row}'".format(expense_name=expense_name, row=row))
+    log.info("Added an expense '{expense_name}' to the range '{row}'".format(expense_name=expense_name, row=row))
     return row
 
 

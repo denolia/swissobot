@@ -4,7 +4,9 @@ import logging
 
 from telegram import ChatAction
 
-from user_check import allowed_user
+from utils.user_check import allowed_user
+
+log = logging.getLogger(__name__)
 
 
 def current_weather(bot, update):
@@ -13,7 +15,7 @@ def current_weather(bot, update):
     if not allowed_user(bot, update):
         return
 
-    logging.info(msg="Finding out current weather... ")
+    log.info(msg="Finding out current weather... ")
     link = "http://api.openweathermap.org/data/2.5/weather?lat=59.95&lon=30.21&appid=d9022c300d4c076fd764ce33996e75ac"
     import requests
 
@@ -23,7 +25,7 @@ def current_weather(bot, update):
         bot.sendMessage(chat_id=update.message.chat_id, text="Sorry,\n" + str(resp.status_code))
         raise EnvironmentError('GET /weather?lat=59.95&lon=30.21 {}'.format(resp.status_code))
 
-    logging.info(resp.json())
+    log.info(resp.json())
     temp_kelv = float(resp.json().get('main').get('temp'))
     temp_celcius = temp_kelv - 273.15
     humidity = resp.json().get('main').get('humidity')
@@ -38,6 +40,6 @@ def current_weather(bot, update):
                 + "Давление: " + str(round(pressure_mmhg, 2)) + " мм рт.ст.\n" \
                 + "Влажность: " + str(humidity) + " %\n" \
                 + "Скорость ветра: " + str(wind_speed) + " м/c"
-    logging.info(reply_msg)
+    log.info(reply_msg)
 
     bot.sendMessage(chat_id=update.message.chat_id, text=reply_msg)

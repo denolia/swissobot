@@ -3,6 +3,8 @@
 import logging
 from collections import namedtuple
 
+log = logging.getLogger(__name__)
+
 BOT_NAME = '@DnJTodoBot'
 SEPARATOR = ';'
 
@@ -87,7 +89,7 @@ def handle_error(bot, update, command: Command, custom_msg='', exception=None):
                                                      example=command.example)
     bot.sendMessage(chat_id=update.message.chat_id, text=msg)
     if exception is not None:
-        logging.error(exception)
+        log.error(exception)
 
 
 if __name__ == "__main__":
