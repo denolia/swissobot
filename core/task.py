@@ -7,7 +7,7 @@ from telegram import ChatAction
 
 from googlesheets import goglemogle
 from utils.commands import TASK_DELETE_COMMAND, handle_error, get_operands
-from utils.user_check import check_user_type
+from utils.user_check import get_user_group
 
 lock = Lock()
 
@@ -17,11 +17,10 @@ log = logging.getLogger(__name__)
 def task(bot, update):
     log.info(msg="Adding a task " + str(update.message))
 
-    user_group = check_user_type(bot, update)
-    if user_group is None or user_group == "":
-        return
-
-    if update.message.text is None:
+    user = update.message.from_user.username
+    user_group = get_user_group(user)
+    if user_group is None:
+        handle_error(bot, update, None, "Access denied")
         return
 
     bot.sendChatAction(chat_id=update.message.chat_id,
@@ -57,8 +56,10 @@ def task(bot, update):
 def task_list(bot, update):
     log.info(msg="Listing tasks ")
 
-    user_group = check_user_type(bot, update)
-    if user_group != "d&j":
+    user = update.message.from_user.username
+    user_group = get_user_group(user)
+    if user_group is None:
+        handle_error(bot, update, None, "Access denied")
         return
 
     bot.sendMessage(chat_id=update.message.chat_id, text="I have something for you:")
@@ -112,11 +113,10 @@ def print_task_list(bot, update, values):
 def done_task(bot, update):
     log.info(msg="Finishing a task " + str(update.message))
 
-    user_group = check_user_type(bot, update)
-    if user_group is None or user_group == "":
-        return
-
-    if update.message.text is None:
+    user = update.message.from_user.username
+    user_group = get_user_group(user)
+    if user_group is None:
+        handle_error(bot, update, None, "Access denied")
         return
 
     bot.sendChatAction(chat_id=update.message.chat_id,
@@ -154,36 +154,35 @@ def done_task(bot, update):
 def task_delete_handler(bot, update):
     log.info(msg="Deleting a task " + str(update.message))
 
-    user_group = check_user_type(bot, update)
-    if user_group is None or user_group == "":
+    user = update.message.from_user.username
+    user_group = get_user_group(user)
+    if user_group is None:
+        handle_error(bot, update, None, "Access denied")
         return
 
     bot.sendChatAction(chat_id=update.message.chat_id,
                        action=ChatAction.TYPING)
 
-    if update.message.text is None:
-        handle_error(bot, update, TASK_DELETE_COMMAND, 'No text provided')
-        return
     try:
         operands = get_operands(TASK_DELETE_COMMAND, update.message.text)
     except Exception as e:
         handle_error(bot, update, TASK_DELETE_COMMAND, str(e))
         raise e
 
-    with lock:
-        if operands[0] is not None:
-            task_id = operands[0]
-        else:
-            handle_error(bot, update, TASK_DELETE_COMMAND, "No task id provided")
-            return
+    if operands[0] is not None:
+        task_id = operands[0]
+    else:
+        handle_error(bot, update, TASK_DELETE_COMMAND, "No task id provided")
+        return
 
-        try:
-            task_id = int(task_id)
+    try:
+        task_id = int(task_id)
+        with lock:
             result = goglemogle.delete_task(user_group, task_id)
-        except Exception as e:
-            handle_error(bot, update, TASK_DELETE_COMMAND, str(e))
-            raise e
+    except Exception as e:
+        handle_error(bot, update, TASK_DELETE_COMMAND, str(e))
+        raise e
 
-        log.info(result)
-        reply_msg = update.message.from_user.first_name + ", я удалил задачу " + str(task_id)
-        bot.sendMessage(chat_id=update.message.chat_id, text=reply_msg)
+    log.info(result)
+    reply_msg = update.message.from_user.first_name + ", я удалил задачу " + str(task_id)
+    bot.sendMessage(chat_id=update.message.chat_id, text=reply_msg)

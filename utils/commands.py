@@ -2,6 +2,7 @@
 
 import logging
 from collections import namedtuple
+from typing import Optional
 
 log = logging.getLogger(__name__)
 
@@ -83,14 +84,18 @@ def get_operands(command: Command, message: str) -> list:
     return result
 
 
-def handle_error(bot, update, command: Command, custom_msg='', exception=None):
-    msg = '{custom_msg}\n{format}\n{example}'.format(custom_msg=custom_msg,
-                                                     format=command.format,
-                                                     example=command.example)
-    bot.sendMessage(chat_id=update.message.chat_id, text=msg)
+def handle_error(bot, update, command: Optional[Command], custom_msg: str ='', exception: Exception = None):
+    if command is None:
+        msg = 'An error occurred'
+    else:
+        msg = '{custom_msg}\n{format}\n{example}'.format(custom_msg=custom_msg,
+                                                         format=command.format,
+                                                         example=command.example)
     if exception is not None:
         log.error(exception)
+        msg += "\n{}".format(str(exception))
 
+    bot.sendMessage(chat_id=update.message.chat_id, text=msg)
 
 if __name__ == "__main__":
     import doctest

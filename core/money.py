@@ -12,7 +12,7 @@ from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from googlesheets import goglemogle
 from googlesheets.goglemogle import get_categories
 from utils.commands import get_operands, handle_error, MONEY_LIST_COMMAND, MONEY_COMMAND, MONEY_EDIT_COMMAND
-from utils.user_check import check_user_type, get_user_group
+from utils.user_check import get_user_group
 
 log = logging.getLogger(__name__)
 
@@ -24,8 +24,10 @@ EXPENSE = {}
 
 def money_handler(bot, update):
     log.info(msg="Adding a money record: " + str(update.message.text))
-    user_group = check_user_type(bot, update)
-    if user_group != "d&j":
+    user = update.message.from_user.username
+    user_group = get_user_group(user)
+    if user_group is None:
+        handle_error(bot, update, None, "Access denied")
         return
 
     bot.sendChatAction(chat_id=update.message.chat_id, action=ChatAction.TYPING)
@@ -139,16 +141,14 @@ def compose_categories_kbd(user_group):
 
 def money_list_handler(bot, update):
     log.info(msg="Getting list of expenses for a date: " + str(update.message.text))
-    user_group = check_user_type(bot, update)
-    if user_group != "d&j":
+    user = update.message.from_user.username
+    user_group = get_user_group(user)
+    if user_group is None:
+        handle_error(bot, update, None, "Access denied")
         return
 
     bot.sendChatAction(chat_id=update.message.chat_id,
                        action=ChatAction.TYPING)
-
-    if update.message.text is None:
-        handle_error(bot, update, MONEY_LIST_COMMAND, 'No text provided')
-        return
 
     try:
         operands = get_operands(MONEY_LIST_COMMAND, update.message.text)
@@ -222,12 +222,10 @@ def print_money_list(bot, update, values, date: datetime.date):
 def money_edit_handler(bot, update):
     log.info(msg="Editing a money record " + str(update.message))
 
-    user_group = check_user_type(bot, update)
-    if user_group != "d&j":
-        return
-
-    if update.message.text is None:
-        handle_error(bot, update, MONEY_EDIT_COMMAND, 'No text provided')
+    user = update.message.from_user.username
+    user_group = get_user_group(user)
+    if user_group is None:
+        handle_error(bot, update, None, "Access denied")
         return
 
     bot.sendChatAction(chat_id=update.message.chat_id,
