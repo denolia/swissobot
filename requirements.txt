@@ -1,0 +1,9 @@
+python-dateutil
+python-telegram-bot
+colorlog
+PyYAML
+httplib2
+apiclient
+google-api-python-client
+oauth2client
+requests
